@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:movilidad_movilidad_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; <a href="{% url 'admin:movilidad_movilidad_change' original.pk %}">{{ original }}</a>
+  &rsaquo; LA vigente
+</div>
+{% endblock %}
+
+{% block content %}
+<p>Resultado de aplicar en orden las versiones firmadas. No se edita: para cambiarlo, registra una versión nueva.</p>
+
+<h2>Versiones aplicadas</h2>
+{% if la.versiones %}
+<ul>
+  {% for v in la.versiones %}
+  <li><a href="{% url 'admin:movilidad_versionla_change' v.pk %}">{{ v }}</a> · {{ v.get_formato_display }}
+    {% if v.corrige %}(corrige v{{ v.corrige.numero }}){% endif %}
+    {% if v.fecha_firma_udc %}· firma UDC {{ v.fecha_firma_udc|date:"d/m/Y" }}{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Todavía no hay ninguna versión firmada.</p>
+{% endif %}
+
+{% for s in semestres %}
+<h2>{{ s.numero }}.º semestre</h2>
+<table>
+  <thead><tr><th>Materias de destino</th><th>ECTS</th><th>Materias UDC</th><th>ECTS</th></tr></thead>
+  <tbody>
+  {% for g in s.grupos %}
+    <tr>
+      <td>{% for a in g.materias_destino %}{{ a.nombre }}{% if a.codigo %} ({{ a.codigo }}){% endif %}{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}</td>
+      <td>{{ g.ects_destino|floatformat:"-1" }}</td>
+      <td>{% if g.sin_reconocimiento %}<em>Sin reconocimiento</em>{% else %}{% for a in g.materias_udc %}{{ a.codigo }} {{ a.nombre }}{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}{% endif %}</td>
+      <td>{{ g.ects_udc|floatformat:"-1" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><th>Total reconocible</th><th>{{ s.ects_destino|floatformat:"-1" }}</th><th></th><th>{{ s.ects_udc|floatformat:"-1" }}</th></tr></tfoot>
+</table>
+{% endfor %}
+
+<h2>Avisos</h2>
+{% if avisos %}
+<ul class="messagelist">
+  {% for a in avisos %}<li class="warning"><b>{{ a.regla }}</b>: {{ a.mensaje }}</li>{% endfor %}
+</ul>
+{% else %}
+<p>Sin avisos.</p>
+{% endif %}
+{% endblock %}

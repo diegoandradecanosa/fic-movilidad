@@ -1,4 +1,7 @@
-"""Modelo de datos del bloque 1: convocatorias, solicitudes de adjudicación y movilidades.
+"""Modelo de datos.
+
+Bloque 1: convocatorias, solicitudes de adjudicación y movilidades.
+Bloque 2: catálogos de asignaturas, versiones del acuerdo académico (LA) y filas de correspondencia.
 
 Ver CLAUDE.md para el dominio completo. La Movilidad es la entidad central: un estudiante,
 un destino, un curso y un plazo de convocatoria.
@@ -8,7 +11,10 @@ import hashlib
 import hmac
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 
 
 def hash_dni(dni: str) -> str:
@@ -215,6 +221,11 @@ class Movilidad(models.Model):
     semestre_inicio = models.PositiveSmallIntegerField(null=True, blank=True)
     duracion_semestres = models.PositiveSmallIntegerField(null=True, blank=True)
     condiciones = models.TextField(blank=True)
+    fecha_llegada = models.DateField(null=True, blank=True, help_text="Fecha del certificado de llegada")
+    fecha_fin = models.DateField(null=True, blank=True, help_text="Fecha real de fin de estancia")
+    fecha_inicio_s2 = models.DateField(
+        null=True, blank=True, help_text="Inicio del 2.º semestre en destino (plazo de modificación, RN-05)"
+    )
     estado = models.CharField(max_length=30, choices=EstadoMovilidad.choices, default=E.ADJUDICADA)
     creada = models.DateTimeField(auto_now_add=True)
     actualizada = models.DateTimeField(auto_now=True)
@@ -258,3 +269,270 @@ class EventoMovilidad(models.Model):
 
     def __str__(self):
         return f"{self.fecha:%d/%m/%Y %H:%M} {self.estado_anterior or '—'} → {self.estado_nuevo}"
+
+
+# --- Bloque 2: acuerdo académico ---------------------------------------------------------------
+
+
+class ModificacionNoPermitida(Exception):
+    """Se intentó cambiar algo firmado (regla 3 de CLAUDE.md: nada firmado se sobrescribe)."""
+
+
+class Cuatrimestre(models.TextChoices):
+    C1 = "C1", "1.º cuatrimestre"
+    C2 = "C2", "2.º cuatrimestre"
+    VARIOS = "VARIOS", "Diferentes períodos"
+    DESCONOCIDO = "DESCONOCIDO", "Sin especificar"
+
+
+class _ECTSBloqueadosAlFirmar(models.Model):
+    """Los ECTS de una asignatura usada en un LA firmado no cambian: el LA vigente y las
+    validaciones se calculan con ellos. Si el destino cambia los créditos, se crea otra asignatura."""
+
+    campo_filas = None  # nombre del related_name en FilaCorrespondencia
+
+    class Meta:
+        abstract = True
+
+    def usada_en_version_firmada(self) -> bool:
+        if not self.pk:
+            return False
+        filas = getattr(self, self.campo_filas)
+        return filas.exclude(version__estado=EstadoVersionLA.BORRADOR).exists()
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            anterior = type(self).objects.filter(pk=self.pk).values_list("ects", flat=True).first()
+            if anterior is not None and anterior != self.ects and self.usada_en_version_firmada():
+                raise ModificacionNoPermitida(
+                    f"{self.nombre}: sus ECTS ({anterior}) están en un LA firmado; crea otra asignatura"
+                )
+        super().save(*args, **kwargs)
+
+
+class AsignaturaUDC(_ECTSBloqueadosAlFirmar):
+    """Materia del catálogo de la FIC para un curso académico (RF-04)."""
+
+    campo_filas = "filas_udc"
+
+    curso_academico = models.CharField(max_length=9, help_text="2026/27")
+    titulacion = models.ForeignKey(Titulacion, on_delete=models.PROTECT, related_name="asignaturas")
+    tipo = models.CharField(max_length=10, blank=True, help_text="Grao / Máster")
+    codigo = models.CharField(max_length=10, help_text="Código de materia, p. ej. 200188")
+    codigo_oficial = models.CharField(max_length=12, blank=True, help_text="Código 614G01xxx de los OLA")
+    nombre = models.CharField(max_length=255)
+    ects = models.DecimalField(max_digits=5, decimal_places=2)
+    curso = models.CharField(max_length=5, blank=True, help_text="1, 2… o rango (3-4)")
+    cuatrimestre = models.CharField(max_length=12, choices=Cuatrimestre.choices, default=Cuatrimestre.DESCONOCIDO)
+
+    class Meta:
+        verbose_name = "asignatura UDC"
+        verbose_name_plural = "asignaturas UDC"
+        ordering = ["titulacion", "curso", "nombre"]
+        constraints = [
+            models.UniqueConstraint(fields=["curso_academico", "codigo"], name="asignatura_udc_unica")
+        ]
+
+    def __str__(self):
+        return f"{self.codigo} {self.nombre} ({self.ects:g} ECTS)"
+
+
+class AsignaturaDestino(_ECTSBloqueadosAlFirmar):
+    """Materia de una institución de destino; el catálogo crece con cada LA registrado (RF-05)."""
+
+    campo_filas = "filas_destino"
+
+    institucion = models.ForeignKey(Institucion, on_delete=models.PROTECT, related_name="asignaturas")
+    codigo = models.CharField(max_length=50, blank=True)
+    nombre = models.CharField(max_length=255)
+    ects = models.DecimalField(max_digits=5, decimal_places=2)
+    semestre = models.PositiveSmallIntegerField(null=True, blank=True, choices=[(1, "1.º"), (2, "2.º")])
+    horas_totales = models.DecimalField(
+        max_digits=6, decimal_places=1, null=True, blank=True,
+        help_text="Solo si el destino no usa ECTS: ECTS = horas / 8,5 (RN-04)",
+    )
+    enlace_guia = models.URLField(blank=True)
+
+    class Meta:
+        verbose_name = "asignatura de destino"
+        verbose_name_plural = "asignaturas de destino"
+        ordering = ["institucion", "nombre"]
+
+    def __str__(self):
+        codigo = f"{self.codigo} " if self.codigo else ""
+        return f"{codigo}{self.nombre} ({self.ects:g} ECTS)"
+
+
+class TipoVersionLA(models.TextChoices):
+    BEFORE = "BEFORE", "Before"
+    DURING_S1 = "DURING_S1", "During 1.er semestre"
+    DURING_S2 = "DURING_S2", "During 2.º semestre"
+    AMPLIACION = "AMPLIACION", "Ampliación"
+
+
+class FormatoLA(models.TextChoices):
+    OLA_EWP = "OLA_EWP", "OLA en EWP"
+    PDF_ORI = "PDF_ORI", "PDF/Word de la ORI"
+    SICUE = "SICUE", "Acuerdo SICUE (Impreso C)"
+
+
+class EstadoVersionLA(models.TextChoices):
+    BORRADOR = "BORRADOR", "Borrador"
+    FIRMADA = "FIRMADA", "Firmada"
+    INVALIDADA = "INVALIDADA", "Invalidada"
+
+
+# Cambios de estado permitidos en una versión. Firmada solo puede invalidarse (p. ej. la ORI anula
+# un OLA-Before aprobado tarde); una corrección se hace con una versión nueva que la 'corrige'.
+TRANSICIONES_VERSION = {
+    EstadoVersionLA.BORRADOR: {EstadoVersionLA.BORRADOR, EstadoVersionLA.FIRMADA, EstadoVersionLA.INVALIDADA},
+    EstadoVersionLA.FIRMADA: {EstadoVersionLA.FIRMADA, EstadoVersionLA.INVALIDADA},
+    EstadoVersionLA.INVALIDADA: {EstadoVersionLA.INVALIDADA},
+}
+
+# Al firmar una versión, la movilidad avanza sola si está en el estado de origen.
+AVANCE_AL_FIRMAR = {
+    TipoVersionLA.BEFORE: (E.LA_PREPARACION, E.LA_FIRMADO),
+    TipoVersionLA.DURING_S1: (E.MODIFICACION_ABIERTA, E.EN_MOVILIDAD),
+    TipoVersionLA.DURING_S2: (E.MODIFICACION_ABIERTA, E.EN_MOVILIDAD),
+}
+
+
+class VersionLA(models.Model):
+    """Una versión del acuerdo académico (RF-08). El LA vigente se deriva de las firmadas (RF-09)."""
+
+    movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="versiones_la")
+    numero = models.PositiveSmallIntegerField(blank=True, help_text="Orden de aplicación (1, 2, 3…)")
+    tipo = models.CharField(max_length=12, choices=TipoVersionLA.choices)
+    formato = models.CharField(max_length=10, choices=FormatoLA.choices)
+    estado = models.CharField(max_length=12, choices=EstadoVersionLA.choices, default=EstadoVersionLA.BORRADOR)
+    corrige = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="correcciones",
+        help_text="Versión firmada a la que sustituye esta (se aplica en su lugar)",
+    )
+    fecha_solicitud = models.DateField(null=True, blank=True, help_text="Cuándo pidió el estudiante el cambio (RN-05)")
+    fecha_firma_estudiante = models.DateField(null=True, blank=True)
+    fecha_firma_udc = models.DateField(null=True, blank=True)
+    fecha_firma_destino = models.DateField(null=True, blank=True)
+    pdf = models.FileField(upload_to="la/%Y/", blank=True)
+    motivo = models.TextField(blank=True)
+    motivo_invalidacion = models.TextField(blank=True)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "versión del LA"
+        verbose_name_plural = "versiones del LA"
+        ordering = ["movilidad", "numero"]
+        constraints = [models.UniqueConstraint(fields=["movilidad", "numero"], name="version_la_unica")]
+
+    def __str__(self):
+        return f"LA v{self.numero} {self.get_tipo_display()} ({self.get_estado_display().lower()})"
+
+    def clean(self):
+        if self.corrige_id:
+            if self.corrige.movilidad_id != self.movilidad_id:
+                raise ValidationError({"corrige": "La versión corregida es de otra movilidad."})
+            if self.corrige.estado != EstadoVersionLA.FIRMADA:
+                raise ValidationError({"corrige": "Solo se corrige una versión firmada."})
+        if self.estado == EstadoVersionLA.INVALIDADA and not self.motivo_invalidacion:
+            raise ValidationError({"motivo_invalidacion": "Indica por qué se invalida."})
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            self._comprobar_inmutable()
+        if not self.numero:
+            ultimo = VersionLA.objects.filter(movilidad_id=self.movilidad_id).aggregate(m=models.Max("numero"))["m"]
+            self.numero = (ultimo or 0) + 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.estado != EstadoVersionLA.BORRADOR:
+            raise ModificacionNoPermitida(f"{self}: no se borra una versión firmada o invalidada")
+        return super().delete(*args, **kwargs)
+
+    def _comprobar_inmutable(self):
+        guardada = VersionLA.objects.filter(pk=self.pk).first()
+        if guardada is None:
+            return
+        if self.estado not in TRANSICIONES_VERSION[EstadoVersionLA(guardada.estado)]:
+            raise ModificacionNoPermitida(f"{guardada}: no puede pasar a {self.get_estado_display()}")
+        if guardada.estado == EstadoVersionLA.BORRADOR:
+            return
+        editables = {"estado", "motivo_invalidacion"} if guardada.estado == EstadoVersionLA.FIRMADA else set()
+        cambiados = [
+            f.name for f in self._meta.concrete_fields
+            if f.name not in editables and getattr(self, f.attname) != getattr(guardada, f.attname)
+        ]
+        if cambiados:
+            raise ModificacionNoPermitida(f"{guardada}: no se puede modificar ({', '.join(cambiados)})")
+
+    @property
+    def editable(self) -> bool:
+        return self.estado == EstadoVersionLA.BORRADOR
+
+    @transaction.atomic
+    def firmar(self, usuario=None):
+        """Marca la versión como firmada; desde aquí es inmutable. Avanza la movilidad si procede."""
+        if self.estado != EstadoVersionLA.BORRADOR:
+            raise ModificacionNoPermitida(f"{self}: solo se firma un borrador")
+        self.estado = EstadoVersionLA.FIRMADA
+        self.save()
+        origen, destino = AVANCE_AL_FIRMAR.get(self.tipo, (None, None))
+        if origen and self.movilidad.estado == origen:
+            self.movilidad.cambiar_estado(destino, usuario=usuario, nota=f"{self} firmada")
+
+
+class AccionFila(models.TextChoices):
+    ALTA = "ALTA", "+ (alta)"
+    BAJA = "BAJA", "− (baja)"
+
+
+class FilaCorrespondencia(models.Model):
+    """N materias de destino ↔ M materias UDC (RF-06). En el Before todas son altas."""
+
+    version = models.ForeignKey(VersionLA, on_delete=models.CASCADE, related_name="filas")
+    orden = models.PositiveSmallIntegerField(default=0)
+    semestre = models.PositiveSmallIntegerField(choices=[(1, "1.º"), (2, "2.º")], default=1)
+    accion = models.CharField(max_length=4, choices=AccionFila.choices, default=AccionFila.ALTA)
+    materias_destino = models.ManyToManyField(AsignaturaDestino, related_name="filas_destino")
+    materias_udc = models.ManyToManyField(AsignaturaUDC, blank=True, related_name="filas_udc")
+    sin_reconocimiento = models.BooleanField(
+        default=False, help_text="Actividad que figura en el LA pero no se reconoce (p. ej. curso de idioma)"
+    )
+    observaciones = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = "fila de correspondencia"
+        verbose_name_plural = "filas de correspondencia"
+        ordering = ["version", "semestre", "orden", "id"]
+
+    def __str__(self):
+        signo = "+" if self.accion == AccionFila.ALTA else "−"
+        return f"{signo} S{self.semestre} fila {self.orden}"
+
+    def _comprobar_editable(self):
+        if self.version_id and not VersionLA.objects.get(pk=self.version_id).editable:
+            raise ModificacionNoPermitida("La versión del LA no es un borrador: sus filas no se modifican")
+
+    def save(self, *args, **kwargs):
+        self._comprobar_editable()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._comprobar_editable()
+        return super().delete(*args, **kwargs)
+
+
+@receiver(m2m_changed, sender=FilaCorrespondencia.materias_destino.through)
+@receiver(m2m_changed, sender=FilaCorrespondencia.materias_udc.through)
+def _materias_de_fila_firmada(sender, instance, action, reverse, pk_set, **kwargs):
+    if not action.startswith("pre_"):
+        return
+    if not reverse:
+        instance._comprobar_editable()
+        return
+    filas = FilaCorrespondencia.objects.filter(pk__in=pk_set or [])
+    if action == "pre_clear":
+        filas = getattr(instance, instance.campo_filas).all()
+    if filas.exclude(version__estado=EstadoVersionLA.BORRADOR).exists():
+        raise ModificacionNoPermitida("La asignatura está en un LA firmado")
