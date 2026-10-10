@@ -11,7 +11,7 @@ https://claude.ai/code/artifact/ae2b61ec-0700-4c90-9985-7a0eabd10cb0
 
 ## Stack y comandos
 
-- Python 3.12+, Django 5.1, SQLite en desarrollo, PostgreSQL en producción (nube externa, datos en la UE).
+- Python 3.10+ (probado en 3.10 y 3.13), Django 5.1, SQLite en desarrollo, PostgreSQL en producción (nube externa, datos en la UE).
 - Tests: `pytest` (pytest-django). Ejecutar siempre antes de dar algo por terminado.
 - Arranque local: `python manage.py migrate && python manage.py runserver`.
 - Importar adjudicaciones: `python manage.py importar_adjudicaciones <excel> --listado provisional|definitiva`.
