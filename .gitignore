@@ -10,3 +10,4 @@ privado/
 *.ods
 *.pdf
 *.docx
+*.egg-info/
