@@ -3,7 +3,8 @@
 Aplicación de soporte al coordinador de movilidad de la Facultade de Informática (UDC): seguimiento
 de cada movilidad saliente desde la adjudicación hasta el acta de reconocimiento.
 
-Ver [CLAUDE.md](CLAUDE.md) para el dominio, las reglas y las decisiones.
+Ver [CLAUDE.md](CLAUDE.md) para el dominio, las reglas y las decisiones, y
+[docs/requisitos.md](docs/requisitos.md) para el proceso y los requisitos completos.
 
 ## Puesta en marcha
 

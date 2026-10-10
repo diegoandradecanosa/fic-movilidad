@@ -7,6 +7,7 @@ sus modificaciones y el acta de reconocimiento ("After the Mobility", ATM).
 
 Documento de requisitos completo (fuente de verdad funcional):
 https://claude.ai/code/artifact/ae2b61ec-0700-4c90-9985-7a0eabd10cb0
+(copia en el repo: `docs/requisitos.md`, exportada el 10/10/2026 y anonimizada).
 
 ## Stack y comandos
 
@@ -22,6 +23,15 @@ https://claude.ai/code/artifact/ae2b61ec-0700-4c90-9985-7a0eabd10cb0
 - `movilidad/` — app principal: modelos, admin, importadores (`movilidad/importers/`), comandos.
 - `data/` — catálogos públicos (materias de la FIC y destinos MoveON 2026/27). NO contiene datos de alumnos.
 - `tests/` — tests con datos sintéticos generados en el propio test.
+- `docs/` — requisitos (`requisitos.md`). Los documentos con datos de alumnos se quedan fuera del repo
+  (OneDrive del coordinador / carpeta `privado/`, ignorada por git).
+
+## Recursos locales (solo en el Mac del coordinador, no en el repo)
+
+- Skill `acta-reconocimiento` y scripts en `ToRs26/_recursos_acta` (lib_extract, lib_grades, lib_docx)
+  y el JSON de equivalencias de notas (Resol. 18/09/2017): reutilizar en el bloque 4.
+- Excel de adjudicaciones de la ORI (DECANATO/Erasmus/<curso>/): para probar los importadores en local;
+  nunca copiarlos a `tests/` ni hacer commit.
 
 ## Reglas de trabajo (obligatorias)
 
