@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+db.sqlite3
+.env
+.pytest_cache/
+# Nunca versionar documentación real de alumnos
+privado/
+*.xlsx
+*.ods
+*.pdf
+*.docx

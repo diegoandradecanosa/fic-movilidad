@@ -1,0 +1,462 @@
+tipo,codigo_plan,titulacion,curso,codigo_materia,materia,creditos,periodo
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,200228,Álxebra Lineal,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,200229,Matemática Discreta,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,200230,Probabilidade e Estatística Básica,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,200231,Fundamentos de Programación I,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200232,Aprendizaxe Automática a Gran Escala,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200233,Métodos Numéricos para Ciencia de Datos,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200234,Procesamento Paralelo Avanzado,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200235,Representación e Xestión de Datos Espazo-Temporais,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200236,Técnicas de Simulación e Remostraxe,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200237,Empresa e Emprendemento,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200238,Prácticas Externas,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200239,Análise e Interpretación de Datos Audiovisuais,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200240,Datos en Mobilidade,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200241,Xestión de Datos en Escenarios Intelixentes,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200242,Xestión de Datos Ómicos e Modelización,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200243,Linguaxe Natural e Minaría de Textos,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200244,Sistemas Recomendadores,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,200245,Traballo Fin de Grao,12.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,201782,Fundamentos de Computadores,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,201783,Cálculo Multivariable,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,201784,Inferencia Estatística,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,201785,Introdución ás Bases de Datos,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,201786,Fundamentos de Programación II,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,1,201787,Internet: Redes e Datos,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201788,Deseño e Análise de Algoritmos,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201789,Modelos de Regresión,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201790,Modelización Estatística de Datos de Alta Dimensión,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201791,Sinais e Sistemas,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201792,Infraestruturas de Computación de Altas Prestacións,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201793,Modelaxe de Bases de Datos,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201794,"Protección, Privacidade e Seguridade de Datos",6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201795,Teoría da Información,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201796,Aprendizaxe Automática I,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,2,201797,Optimización Matemática,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201798,Aprendizaxe Automática II,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201799,Análise Estatística de Datos con Dependencia,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201800,Procesamento Paralelo,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201801,Xestión de Proxectos de Enxeñaría de Datos,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201802,Bases de Datos Analíticas,6.0,1.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201803,Aprendizaxe Automática III,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201804,Recuperación de Información,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201805,"Procesamento de Imaxe, Vídeo e Audio",6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201806,Procesamento da Linguaxe Escrita,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,3,201807,Tecnoloxías de Integración,6.0,2.º cuadrimestre
+Grao,10011,Grao en Ciencia e Enxeñaría de Datos,4,201808,Análise Estatística de Datos Complexos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,200188,Internet e Sistemas Distribuídos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,200189,Lexislación e Seguridade Informática,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,200190,Xestión de Infraestruturas,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200191,Arquitectura do Software,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,3-4,200192,Enxeñaría de Requisitos,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200193,Aseguramento da Calidade,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200194,Bases de Datos Avanzadas,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,200195,Programación Avanzada,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200196,Codeseño Hardware/Software,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200197,Dispositivos Hardware e Interfaces,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,3-4,200198,Arquitectura de Computadores,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,3-4,200199,Software de Comunicacións,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,200200,Procesamento Dixital da Información,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200201,Representación do Coñecemento e Razoamento Automático,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200202,Desenvolvemento de Sistemas Intelixentes,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200203,Aprendizaxe Automática,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200204,Teoría da Computación,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,3,200205,Recuperación de Información,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200206,Análise e Desenvolvemento dos Sistemas de Información,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200207,Xestión de Procesos de Negocio,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,3-4,200208,Explotación de Almacéns de Datos,6.0,sin especificar en el PDF
+Grao,10009,Grao en Enxeñaría Informática,3-4,200209,Calidade en Sistemas de Información,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,200210,Modelado Avanzado de Información,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200211,Calidade na Xestión TIC,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200212,Administración de Sistemas Operativos,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200213,Administración de Redes,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3-4,200214,Programación Integrativa,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200215,Administración de Infraestruturas Informáticas,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200216,Robótica,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200217,Traballo Fin de Grao. Mención en Enxeñaría de Computadores,12.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200218,Traballo Fin de Grao. Mención en Computación,12.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200219,Planificación de Sistemas de Información,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200220,Traballo Fin de Grao. Mención en Sistemas de Información,12.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200221,Administración de Infraestruturas e Sistemas Informáticos,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200222,Traballo Fin de Grao. Mención en Tecnoloxías da Información,12.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200224,Prácticas en Empresa,12.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,200227,Prácticas en Empresa,12.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,201756,Administración de Bases de Datos,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201757,Metodoloxías de Desenvolvemento,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201758,Marcos de Desenvolvemento,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201759,Validación e Verificación do Software,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201760,Ferramentas de Desenvolvemento,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201761,Métodos Estatísticos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201762,Programación de Sistemas,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201763,Enxeñaría de Infraestruturas Informáticas,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201764,Sistemas Encaixados,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201765,Redes Móbiles e Sen Fíos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201766,"Contornos Inmersivos, Interactivos e de Entretemento",6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201767,Métodos Numéricos para a Informática,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201768,Deseño das Linguaxes de Programación,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201769,Computación Gráfica e Visualización,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201770,Procesamento de Linguaxes,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201771,Visión Artificial,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201772,Integración de Datos,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201773,Sistemas de Información Empresarial,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201774,Sectores de Negocio,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201775,Arquitectura dos Sistemas de Información,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201776,Seguridade nos Sistemas Informáticos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201777,Integración de Aplicacións,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201778,Servizos Multimedia,6.0,Diferentes períodos
+Grao,10009,Grao en Enxeñaría Informática,4,201779,Deseño de Redes,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201780,Proxectos de Desenvolvemento Software,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,4,201781,Traballo Fin de Grao. Mención en Enxeñaría do Software,12.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202303,Programación I,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202304,Informática Básica,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202305,Cálculo,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202306,Matemática Discreta,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202307,Tecnoloxía Electrónica,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202308,Programación II,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202309,Fundamentos dos Computadores,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202310,Estatística,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202311,Administración e Xestión de Organizacións,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,1,202312,Álxebra,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202313,Algoritmos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202314,Estrutura de Computadores,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202315,Bases de Datos,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202316,Paradigmas de Programación,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202317,Deseño Software,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202318,Sistemas Operativos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202319,Redes,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202320,Concorrencia e Paralelismo,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202321,Proceso Software,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,2,202322,Sistemas Intelixentes,6.0,2.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,202323,Xestión de Proxectos,6.0,1.º cuadrimestre
+Grao,10009,Grao en Enxeñaría Informática,3,202324,Interfaces Persoa Máquina,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202375,Programación II,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202376,Algoritmos,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202377,Enxeñaría do Software,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202378,Bases de Datos,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202379,Adquisición e Procesamento de Sinal,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202380,Introdución aos Computadores,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202381,Redes,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202382,"Computación Concorrente, Paralela e Distribuída",6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202383,Xestión de Organizacións,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202384,Lóxica,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202385,Autómatas e Linguaxes Formais,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202386,Fundamentos de Aprendizaxe Automática,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202387,Algoritmos Básicos da Intelixencia Artificial,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202388,Representación do Coñecemento e Razonamento,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202389,Modelos Avanzados de Aprendizaxe Automática I,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202390,Aprendizaxe Profunda,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202391,Modelos Avanzados de Aprendizaxe Automática II,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202392,Fundamentos de Procesamento de Linguaxe Natural,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202393,Técnicas Avanzadas de Procesamento de Linguaxe Natural,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202394,Recuperación de Información e Minería Web,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202395,Sistemas baseados en Coñecemento,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202396,Sistemas Multiaxente,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202397,Modelado baseado en Axentes,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202398,Fundamentos de Robótica Intelixente,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202399,Robótica Intelixente Aplicada,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202400,Principios de Visión por Computador,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,3,202401,Visión por Computador Aplicada,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202551,Álxebra,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202552,Cálculo e Análise Numérica,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202553,Matemática Discreta,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202554,Estatística,6.0,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,2,202555,Optimización Matemática,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,1,202556,Programación I,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202557,Almacenamento. Preprocesado e Análise Avanzada de Datos (Formación Académica),6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202558,Almacenamento. Preprocesado e Análise Avanzada de Datos (Formación en empresa),6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202559,Ferramentas de Desenvolvemento e Despregadura (Formación Académica),6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202560,Ferramentas de Desenvolvemento e Despregadura (Formación en empresa),6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202561,Seguridade. Lexislación e Ética de Sistemas Intelixentes (Formación Académica),4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202562,Seguridade. Lexislación e Ética de Sistemas Intelixentes (Formación en empresa),4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202563,Sistemas de Recomendación,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202564,Interacción Intelixente,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202565,Fogar. Edificios e Cidades Intelixentes,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202566,Ciberseguridade e Protección da Información,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202567,Banca e Finanzas,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202568,Bioinformática e Medicina,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202569,Vehículos Autónomos,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202570,Intelixencia Artificial a Gran Escala,4.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202571,Prácticas Externas III,13.5,2.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202572,Prácticas Externas I,6.0,1.º cuadrimestre
+Grao,10084,Grao en Intelixencia Artificial,4,202573,Traballo de Fin de Grao,12.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100260,Modelos Matemáticos en Medio Ambiente,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100261,Modelos Matemáticos en Finanzas,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100262,Deseño Asistido por Ordenador,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100263,Software Profesional en Mecánica de Fluídos,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100264,Software Profesional en Mecánica de Sólidos,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100266,Software Profesional en Acústica,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100267,Software Profesional en Medio Ambiente,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100268,Software Profesional en Finanzas,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100271,Métodos de Perturbacións,6.0,sin especificar en la fuente
+Máster,20032,Máster Universitario en Matemática Industrial,1,100272,Optimización e Control,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100273,Análise Variacional de Ecuacións en Derivadas Parciais,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100274,Estabilidade de Sistemas Físicos,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100276,Métodos Numéricos Estocásticos,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100278,Ampliación de Elementos Finitos,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100279,Ampliación de Volumes Finitos,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100280,Métodos de Elementos de Contorno,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100281,Métodos Numéricos para Grandes Sistemas de Ecuacións,3.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100282,Programación en C++,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100283,Cálculo Paralelo,3.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100284,Redes de Computadores e Computación Distribuída,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100285,Arquitectura de Computadores e Sistemas Operativos,3.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,2,100286,Traballo Fin de Máster,30.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100287,Problemas Inversos e Reconstrución de Imaxes,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100288,Combustión,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100289,Turbulencia,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100291,Deseño Óptimo Multidisciplinar,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,100292,Modelización en Biomedicina,6.0,2.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100372,Arquitecturas de Altas Prestacións,6.0,1.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100373,Programación Paralela,6.0,1.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100374,Programación de Arquitecturas Heteroxéneas,6.0,1.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100375,Infraestruturas de Altas Prestacións,6.0,1.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100376,Ferramentas para HPC,6.0,1.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100377,HPC na Nube,6.0,1.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100378,Programación Paralela Avanzada,6.0,2.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100379,Análise de Datos con HPC,6.0,2.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100380,Taller de Proxectos,3.0,2.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100381,Prácticas Profesionais,6.0,2.º cuadrimestre
+Máster,20039,Máster en Computación de Altas Prestacións / HPC,1,100382,Traballo Fin de Máster,15.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100557,Planificación Estratéxica de Sistemas de Información,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100558,Dirección de Proxectos,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100559,"Calidade, Seguridade e Auditoría Informática",6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100560,Informática como Servizo,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100561,Arquitecturas e Plataformas Móbiles,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100562,Análise de Sistemas de Información,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100563,Deseño de Sistemas de Información,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100564,"Interacción, Gráficos e Multimedia",6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100565,Intelixencia de Negocio,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100566,Recuperación da Información e Web Semántica,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,2,100567,Prácticas en Empresa,12.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100569,Xestión de Proxectos,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100570,Sistemas Intelixentes,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100571,Estrutura de Computadores,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100572,Calidade na Xestión TIC,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100573,Administración de Sistemas Operativos,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100574,Servizos Multimedia,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100575,Seguridade nos Sistemas Informáticos,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100576,Arquitectura do Software,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,100577,Enxeñaría de Requisitos,6.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,100974,Instrumentación e Procesamento para Aplicacións Biomédicas,6.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,100975,Análise de Imaxes Biomédicas,6.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,100976,Biometría,3.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,100977,Prácticas Externas,3.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,2,100978,Traballo Fin de Máster,30.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101081,Fundamentos de IA,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101082,Enxeñaría de Datos,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101083,Razoamento e Planificación,6.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101084,IA Explicable e Confiable,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101085,Sistemas Multiaxente,6.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101086,Aspectos Computacionais da Ciencia Cognitiva,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101087,Coñecemento e Razoamento con Incerteza,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101088,Comprensión da Linguaxe Natural,6.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101089,Modelado da Linguaxe,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101090,Intelixencia Web e Tecnoloxías Semánticas,6.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101091,Minería de Textos,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101092,Aprendizaxe Automática I,6.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101093,Aprendizaxe Profunda,6.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101094,Aprendizaxe Automática II,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101095,Computación Evolutiva,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101096,IA en Contornos Big Data,6.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101097,Visión por Computador I,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101098,Visión por Computador II,6.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101099,Robótica Intelixente I,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101100,Robótica Intelixente II,6.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101101,Xestión de Proxectos de IA,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101102,IA en Saúde,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101103,IoT Intelixente,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101104,Ciberseguridade Intelixente,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101105,Minería de Procesos,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,1,101106,Sistemas Intelixentes de Tempo Real,3.0,2.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101107,Temas Emerxentes e Emprendemento en IA,3.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101108,Prácticas Académicas Externas,6.0,1.º cuadrimestre
+Máster,20105,Máster Universitario en Intelixencia Artificial,2,101109,Traballo de Fin de Máster,12.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102277,Introdución á Programación,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102278,Introdución ás Bases de Datos,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102279,Fundamentos de Intelixencia Artificial,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102280,Introdución á Bioloxía Molecular,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102281,Xenética e Evolución Molecular,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102282,Xenómica,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102283,"Probabilidade, Estatística e Elementos de Biomatemática",6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102284,Fundamentos de Bioinformática,6.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102285,Métodos Estatísticos Avanzados en Bioinformática,6.0,2.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102286,Análise de Imaxes Biomédicas,6.0,2.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102287,Computación de Altas Prestacións en Bioinformática,6.0,2.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102288,Intelixencia Computacional para Bioinformática,6.0,2.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,1,102289,Estruturas de Datos e Algoritmia para Secuencias Biolóxicas,6.0,2.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102290,"Enxeñaría Biomecánica, Sensorización e Telemedicina",3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102291,Fundamentos de Neurociencia,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102292,Neuroenxeñaría e Innovación en Neurociencia,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102293,Sistemas de Información Sanitaria,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102294,Prácticas en Empresa,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102295,Visualización Médica Avanzada,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102296,Procesamento Avanzado de Secuencias Biolóxicas,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102297,Aplicacións e Tendencias en Bioinformática e Enxeñaría Biomédica,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102298,Xestión do Coñecemento Biomédico,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102300,Intelixencia Computacional para Datos de Alta Dimensionalidade,3.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102301,Traballo Fin de Máster,12.0,1.º cuadrimestre
+Máster,20083,Máster en Bioinformática para Ciencias da Saúde,2,102302,Proxectos de Investigación e Emprendemento,3.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,102525,Aseguramento da Calidade,6.0,2.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,1,102526,Metodoloxías de Desenvolvemento,6.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,2,102527,Emprendemento e Autoemprego,3.0,1.º cuadrimestre
+Máster,20057,Máster Universitario en Enxeñaría Informática,2,102528,Traballo Fin de Máster,15.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102720,Fundamentos de Procesamento e Análise de Imaxe,6.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102721,Procesamento e Análise de Imaxe Avanzados,6.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102722,Modelaxe e Recoñecemento Tridimensional,3.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102723,Descrición e Modelaxe de Imaxe,6.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102724,Recoñecemento Visual,6.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102725,Recoñecemento de Accións Humanas,3.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102726,Fundamentos de Aprendizaxe Automática para Visión por Computador,6.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102727,Aprendizaxe Automática Avanzada para Visión por Computador,6.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102728,Instrumentación e Procesamento para Visión Artificial,6.0,1.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102729,Fotogrametría e Visión Robótica,6.0,2.º cuadrimestre
+Máster,20096,Máster en Visión por Computador,1,102730,Visión Artificial en Tempo Real,3.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102756,Métodos Numéricos e Programación,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102757,Ecuacións Diferenciais Ordinarias / Sistemas Dinámicos,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102758,Ecuacións en Derivadas Parciais,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102759,Métodos Numéricos para Ecuacións en Derivadas Parciais,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102760,Mecánica de Medios Continuos,6.0,1.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102761,Mecánica de Fluídos,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102762,Mecánica de Sólidos,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102764,Acústica,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102809,Electromagnetismo,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102810,Software Profesional en Electromagnetismo,6.0,2.º cuadrimestre
+Máster,20032,Máster Universitario en Matemática Industrial,1,102811,Técnicas de Modelado Reducido,6.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103168,Análise Exploratoria de Datos,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103169,Inferencia Estatística,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103170,Modelos de Probabilidade,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103171,Programación Lineal e Enteira,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103172,Modelos de Regresión,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103173,Tecnoloxías de Xestión de Datos,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103174,Estatística Matemática,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103175,Teoría da Probabilidade,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103176,Programación Matemática,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1-2,103177,Regresión Xeneralizada e Modelos Mixtos,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103178,Métodos Non Paramétricos,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103179,Análise Multivariante,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103180,Optimización Aplicada,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103181,Control Estatístico da Calidade,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103182,Estatística Espacial,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103183,Regresión non Paramétrica e Semiparamétrica,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103184,Análise de Supervivencia,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103185,Introdución á Teoría de Xogos,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103186,Mostraxe,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103187,Procesos Estocásticos,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103188,Redes e Planificación,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103189,Simulación Estatística,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,1,103190,Series de Tempo,5.0,2.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103191,Contrastes de Especificación,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103192,Aprendizaxe Estatístico,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103193,Datos Funcionais,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103194,Enxeñaría Financeira,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103195,Xogos Cooperativos,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103196,Modelos Interactivos da Investigación Operativa,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103197,Técnicas de Remostraxe,5.0,1.º cuadrimestre
+Máster,20044,Máster Universitario en Técnicas Estatísticas,2,103198,Traballo Fin de Máster,15.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103532,Mecánica Cuántica I,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103533,Mecánica Cuántica II,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103534,Fundamentos de Información Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103535,Introdución á Computación Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103536,Fundamentos de Comunicacións Cuánticas,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103537,Ferramentas da Computación Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103538,Programación e Implementación de Algoritmos Cuánticos,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103539,Computación Cuántica e Aprendizaxe Máquina,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103540,Computación Cuántica e Computación de Altas Prestacións,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103541,Aplicacións Prácticas da Computación Cuántica,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103542,Teoría da Información Cuántica Avanzada,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103543,Tecnoloxías Fotónicas para a Comunicación Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103544,Códigos de Corrección de Errores,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103545,Comunicacións Cuánticas Avanzadas,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103546,Redes de Comunicacións Cuánticas,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103547,Óptica Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103548,Materiais Cuánticos,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103549,Sistemas Abertos e Termodinámica Cuántica,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103550,Sistemas Físicos para a Información Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103551,Metroloxía e Sensores Cuánticos,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103552,Mecánica Cuántica Avanzada,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103553,Arquitecturas da Computación Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103554,Comunicacións Cuánticas Vía Satélite,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103555,Técnicas Experimentais para a Información Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103556,Métodos Numéricos en Computación Cuántica,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103557,Introdución á Simulación Cuántica,3.0,1.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103558,Ciencia e Tecnoloxía da Supercondutividade,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103559,Fotónica de Semiconductores,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103560,Sistemas Cuánticos Baseados en Regras,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103561,Laboratorio de Comunicacións Cuánticas,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103562,Prácticas Externas I,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103563,Prácticas Externas II,3.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103564,Traballo Fin de Máster,15.0,2.º cuadrimestre
+Máster,20149,Máster Universitario en Ciencia e Tecnoloxías da Información Cuántica,1,103975,Simulación Cuántica Analóxica,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103622,Dispositivos IoT,4.5,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103623,Redes de Comunicacións en IoT,3.0,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103624,Computación na Nube para IoT,3.0,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103625,Sistemas Embebidos,4.5,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103626,Novas Arquitecturas e Paradigmas IoT,4.5,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103627,Protocolos de Comunicacions para IoT,4.5,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103628,Innovación e Emprendemento Tecnolóxico en IoT,3.0,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103629,Enxeñaría de Datos para IoT,3.0,1.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103630,Aprendizaxe Automático,4.5,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103631,Ciberseguridade en IoT,4.5,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103632,Integración de Sistemas en IoT,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103633,Green IoT,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103634,Xemelgos Dixitais para Plantas Industriais,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103635,Xemelgos Dixitais Robóticos,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103636,Prácticas en Empresa para IIoT,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103637,Traballo de Fin de Mestrado,6.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103671,Análise de vídeo en IoT,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103672,Big Data para IoT,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103673,Smart Health para IoT,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103674,Smart Cities,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103675,Edificios e Fogares Intelixentes,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103676,Big Data para a Sociedade 5.0,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103677,Análise de Vídeo para Aplicacións da Sociedade 5.0,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103678,Despregue de red para aplicacións de Smart Cities/Buildings,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103679,Prácticas en Empresa para Sociedade 5.0,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103680,Prácticas en Empresa para Vehículo Conectado,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103681,IoT no ámbito do Vehículo Conectado,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103682,Sistemas de Transporte Intelixente,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103683,IoT para UAVs,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103684,Big Data para o Vehículo Conectado,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103685,Despregue de Red para Aplicacións de Smart Car,3.0,2.º cuadrimestre
+Máster,20157,Máster Universitario en Internet das Cousas (IoT),1,103686,Análise de Vídeo para Vehículos Conectados,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202717,Patrimonio: Concepto e Fundamento Histórico,5.0,1.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202718,Instrumentos Xurídicos e Normativos para a Protección e Xestión do Patrimonio,5.0,1.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202719,Xestión de Patrimonio Dixital e Xestión Dixital do Patrimonio,5.0,1.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202720,Conservación do Patrimonio Cultural,5.0,1.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202721,Tecnoloxías Aplicadas ao Patrimonio,5.0,1.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202722,Comunicación e Márketing Cultural,5.0,1.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202723,Xestión Dixital do Patrimonio Documental e Bibliográfico,5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202724,Xestión Dixital do Patrimonio Arqueolóxico,5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202725,Xestión Dixital do Patrimonio Artístico,5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202726,Xestión Dixital do Patrimonio Inmaterial,5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202727,"Xestión Dixital do Patrimonio Fotográfico, Audiovisual e Musical",5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202728,Xestión Dixital do Patrimonio Agroecolóxico e Paisaxístico,5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202729,Xestión Dixital do Patrimonio Xeográfico,5.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202730,Narrativas Transmedia Aplicadas á Comunicación Histórica.,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202731,Valorización do Patrimonio: Fundamentos e Técnicas,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202732,Innovación e Sustentabilidade nos Proxectos de Patrimonio Dixital,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202733,Captura e Análise de Realidade,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202734,Virtualización e Recreación do Patrimonio,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202735,Produtos Interactivos e Xestión de Redes Sociais,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,1,202736,SIX e Modelado 3D,3.0,2.º cuadrimestre
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,2,202737,Traballo de Fin de Máster,15.0,Diferentes períodos
+Máster,20151,Máster Universitario en Patrimonio Cultural Dixital,2,202738,Prácticas Externas,15.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202739,Seguridade da Información,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202740,Análise de Malware,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202741,Privacidade e Anonimato,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202742,Seguridade de Aplicacións,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202743,Redes Seguras,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202744,Tecnoloxías de Rexistro Distribuído e Blockchain,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202745,Seguridade en Comunicacións,5.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202746,Fortificación de Sistemas,5.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202747,Ciberseguridade Industrial e IoT,5.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202748,Hacking Ético e Test de Intrusión,5.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202749,Negocio en Ciberseguridade e Emprendemento,4.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202750,Análise Forense,3.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202751,Seguridade en Centros de Datos,3.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202752,Seguridade en Dispositivos Móbiles,3.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,1,202753,Smart Contracts e Distributed Applications,3.0,2.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,2,202754,Xestión da Seguridade da Información,5.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,2,202755,Conceptos e Leis,4.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,2,202756,Prácticas en Empresa,9.0,1.º cuadrimestre
+Máster,20153,Máster en Ciberseguridade,2,202757,Traballo Fin de Máster,12.0,1.º cuadrimestre
