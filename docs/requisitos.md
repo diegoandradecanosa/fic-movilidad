@@ -77,7 +77,7 @@ El acta debe llegar a la ORI firmada en un máximo de 5 semanas desde la fecha d
 5. Envía a Administración un correo "ATM de \[Nombre\]" con el acta firmada, el ToR y el LA; Administración incorpora las notas y abre un plazo extraordinario de matrícula si hace falta. Se remite copia a la ORI.
 6. Correcciones: Administración o el alumno detectan errores (nota que falta, escala mal elegida, materia sin LA, nota inferior a la esperada). Se genera una versión nueva ("\_v2", "\_DAC2") sin borrar la firmada y se reenvía como "RE: ATM de …".
 
-Reglas de construcción del acta ya fijadas: una materia no superada aparece siempre en la Tabla C con su ECTS nominal y en la Tabla D con 0 ECTS y "Suspenso" o "No presentado"; en un "2 por 1" la nota es la media ponderada por ECTS; los cursos de idioma sin equivalencia solo van en la Tabla C.
+Reglas de construcción del acta ya fijadas: una materia no superada aparece siempre en la Tabla C con su ECTS nominal y en la Tabla D con 0 ECTS y "Suspenso" con su nota equivalente (Regl. 3/2025 art. 25.1; proporcional al mínimo de aprobado, porque la tabla oficial no tiene suspensos) o "No presentado"; una materia del LA que no aparece en el ToR de su semestre va como "No presentado"; en un "2 por 1" la nota es la media ponderada por ECTS; los cursos de idioma sin equivalencia solo van en la Tabla C.
 
 ## Reglas de negocio que la aplicación debe validar
 

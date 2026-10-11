@@ -81,11 +81,17 @@ def test_elegir_escala_y_ambiguedad():
 
 def test_resultado_de_una_materia(escala_pt):
     assert resultado_linea(escala_pt, "27").nota == "8,6"
-    assert resultado_linea(escala_pt, "15").nota == SUSPENSO
-    assert resultado_linea(escala_pt, "F").nota == SUSPENSO
+    # suspenso numérico: equivalente proporcional al mínimo de aprobado (5 × 15 / 18 = 4,17)
+    assert resultado_linea(escala_pt, "15").nota == "Suspenso (4,17)"
+    assert resultado_linea(escala_pt, "0").nota == "Suspenso (0)"
+    assert resultado_linea(escala_pt, "F").nota == SUSPENSO  # letra: sin equivalente, se completa a mano
     assert resultado_linea(escala_pt, "ABS").nota == NO_PRESENTADO
     assert resultado_linea(escala_pt, "").nota == NO_PRESENTADO
+    # el ToR la da por no superada aunque la escala la aprueba: sin número, para revisar
     assert resultado_linea(escala_pt, "27", superada_declarada=False).nota == SUSPENSO
+    # escala en la que menos es mejor (1 = sobresaliente): no se inventa el equivalente
+    invertida = escala("DE", "1,0-4,0", {"1,0": 10, "2,0": 8, "3,0": 6.5, "4,0": 5})
+    assert resultado_linea(invertida, "5,0").nota == SUSPENSO
     revisar = resultado_linea(escala_pt, "P", superada_declarada=True)
     assert revisar.nota == "" and revisar.superada and "revisar" in revisar.detalle
 
@@ -166,7 +172,7 @@ def test_los_suspensos_no_vuelven_ambigua_la_escala(mov, gei, escala_pt):
     nuevo_tor(mov, [("X", 6, "27", d1), ("Y", 6, "12", d2)])  # 12: suspenso, no está en ninguna escala
     acta = generar_borrador(mov)
     assert not any("ambigua" in a for a in acta.avisos)
-    assert [f.nota for f in acta.filas_d.all()] == ["8,6", SUSPENSO]
+    assert [f.nota for f in acta.filas_d.all()] == ["8,6", "Suspenso (3,33)"]
 
 
 def test_lineas_de_un_tor_aceptado_no_se_tocan(mov):
@@ -246,6 +252,19 @@ def test_generar_borrador_tablas_c_y_d(caso):
     assert "no coincide" not in avisos  # «EXEMPLO» coincide con el apellido
     caso["mov"].refresh_from_db()
     assert caso["mov"].estado == EstadoMovilidad.ACTA_BORRADOR
+
+
+def test_materia_del_la_que_no_esta_en_el_tor_es_no_presentado(caso):
+    linea = caso["tor"].lineas.get(titulo="Databases")
+    caso["tor"].estado = EstadoToR.BORRADOR
+    caso["tor"].save()
+    linea.delete()
+    caso["tor"].aceptar()
+    acta = generar_borrador(caso["mov"])
+    d = {f.titulo: (f.ects, f.nota) for f in acta.filas_d.all()}
+    assert d["UDC 200001"] == (Decimal(0), NO_PRESENTADO)
+    assert any("va como «No presentado»" in a for a in acta.avisos)
+    assert "UDC 200006" not in d  # el 2.º semestre sigue pendiente, no es «No presentado»
 
 
 def test_solo_usa_tor_aceptados_y_regenera_el_mismo_borrador(caso):
