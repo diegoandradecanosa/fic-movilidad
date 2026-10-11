@@ -175,6 +175,22 @@ def test_cabecera_con_columnas_extra_y_filas_previas(tmp_path):
 
 
 @pytest.mark.django_db
+def test_cabeceras_en_la_fila_del_titulo_y_plazo_combinado(tmp_path):
+    # 2.º plazo 2025/26: los títulos de las últimas columnas están en la fila del título, la fila
+    # «NOME» trae ahí valores, y el plazo solo aparece en la primera fila de cada bloque.
+    i = CABECERA.index("Plaza ofertada")
+    titulo = [None, "LISTAXE DEFINITIVA SEGUNDO PRAZO"] + [None] * (i - 2) + CABECERA[i:]
+    cab = CABECERA[:i] + ["Erasmus+ SMS - X - OUT", "Convocatoria2", "", "Adxudicada prioridade 1", None]
+    filas = [list(f) for f in FILAS_BASE[:2]]
+    filas[1][CABECERA.index("Prazo da Convocatoria")] = None
+    ruta = excel(tmp_path, filas, cabecera=cab, prefijo=[titulo])
+    informe = importar_adjudicaciones(ruta)
+    assert informe.filas == 2
+    assert {s.convocatoria.plazo for s in Solicitud.objects.all()} == {1}
+    assert Solicitud.objects.count() == 2
+
+
+@pytest.mark.django_db
 def test_formato_no_reconocido(tmp_path):
     ruta = excel(tmp_path, [["x"]], cabecera=["NOME", "Otra cosa"])
     with pytest.raises(FormatoNoReconocido):

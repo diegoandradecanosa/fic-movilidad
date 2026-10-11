@@ -168,14 +168,19 @@ def _texto(valor) -> str:
     return "" if valor is None else str(valor).strip()
 
 
-def _mapear_cabeceras(cabecera) -> dict[str, int]:
-    norm = [_norm(c) for c in cabecera]
+def _mapear_cabeceras(cabecera, anteriores=()) -> dict[str, int]:
+    """Columnas por nombre. Si falta alguna en la fila de cabecera, se busca en las filas de encima
+    (en el 2.º plazo de 2025/26 los títulos de las últimas columnas están en la fila del título)."""
     mapa = {}
-    for clave, candidatos in COLUMNAS.items():
-        for i, c in enumerate(norm):
-            if c in candidatos:
-                mapa[clave] = i
-                break
+    for fila in (cabecera, *reversed(anteriores)):
+        norm = [_norm(c) for c in fila]
+        for clave, candidatos in COLUMNAS.items():
+            if clave in mapa:
+                continue
+            for i, c in enumerate(norm):
+                if c in candidatos and i not in mapa.values():
+                    mapa[clave] = i
+                    break
     faltan = [c for c in OBLIGATORIAS if c not in mapa]
     faltan += [c for c, alternativa in ALTERNATIVAS.items() if c not in mapa and alternativa not in mapa]
     if faltan:
@@ -187,13 +192,16 @@ def _leer_filas(ruta: Path):
     wb = openpyxl.load_workbook(ruta, data_only=True, read_only=True)
     ws = wb.worksheets[0]
     filas = ws.iter_rows(values_only=True)
+    anteriores = []
     for cabecera in filas:
         if any(_norm(c) == "nome" for c in cabecera):
             break
+        anteriores.append(cabecera)
     else:
         raise FormatoNoReconocido("No encuentro la fila de cabecera (columna 'NOME')")
-    mapa = _mapear_cabeceras(cabecera)
+    mapa = _mapear_cabeceras(cabecera, anteriores)
     vacias = 0
+    plazo = None
     for fila in filas:
         if fila is None or all(v in (None, "") for v in fila):
             vacias += 1
@@ -205,6 +213,10 @@ def _leer_filas(ruta: Path):
         for clave, alternativa in ALTERNATIVAS.items():
             if clave not in mapa:
                 f[clave] = f.get(alternativa)
+        # Celdas combinadas: el plazo solo viene en la primera fila del bloque.
+        if f.get("plazo") in (None, ""):
+            f["plazo"] = plazo
+        plazo = f["plazo"]
         yield f
 
 
