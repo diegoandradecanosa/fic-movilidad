@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<p>Se creará una versión nueva (borrador) que corrige a <b>{{ acta }}</b>. La versión firmada no se modifica.</p>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <input type="hidden" name="action" value="corregir">
+  <input type="hidden" name="_selected_action" value="{{ acta.pk }}">
+  <input type="submit" value="Crear corrección">
+</form>
+{% endblock %}

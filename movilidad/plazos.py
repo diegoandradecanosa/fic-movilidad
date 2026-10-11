@@ -7,12 +7,13 @@ Solo toca los plazos de origen REGLA que siguen pendientes: los manuales y los y
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.db.models import Q
 
 from movilidad.models import (
+    EstadoActa,
     EstadoPlazo,
     EstadoVersionLA,
     OrigenPlazo,
@@ -49,8 +50,11 @@ def fin_ventana_s2(m):
     return None
 
 
+SEMANAS_ACTA = 5  # RN-15
+
+
 def plazos_deseados(m) -> dict:
-    """{(tipo, version_la_id): Deseado} según los datos actuales de la movilidad."""
+    """{(tipo, version_la_id, tor_id): Deseado} según los datos actuales de la movilidad."""
     versiones = list(m.versiones_la.all())
     firmadas = {v.tipo for v in versiones if v.estado == EstadoVersionLA.FIRMADA}
     cumplido = lambda tipo: EstadoPlazo.CUMPLIDO if tipo in firmadas else None  # noqa: E731
@@ -58,28 +62,28 @@ def plazos_deseados(m) -> dict:
     semestral_s1 = (m.duracion_semestres or 1) == 1 and m.semestre_inicio != 2
 
     if m.fecha_llegada_prevista:
-        d[(TipoPlazo.FIRMAR_BEFORE, None)] = Deseado(
+        d[(TipoPlazo.FIRMAR_BEFORE, None, None)] = Deseado(
             m.fecha_llegada_prevista, "Before firmado por las tres partes antes de la llegada", "RN-06",
             cumplido(TipoVersionLA.BEFORE))
     if fin := fin_ventana_s1(m):
-        d[(TipoPlazo.VENTANA_MOD_S1, None)] = Deseado(
+        d[(TipoPlazo.VENTANA_MOD_S1, None, None)] = Deseado(
             fin, "Fin del plazo para modificar el LA del 1.er semestre (1 mes desde la llegada)", "RN-05",
             cumplido(TipoVersionLA.DURING_S1))
     if fin := fin_ventana_s2(m):
-        d[(TipoPlazo.VENTANA_MOD_S2, None)] = Deseado(
+        d[(TipoPlazo.VENTANA_MOD_S2, None, None)] = Deseado(
             fin, "Fin del plazo para modificar el LA del 2.º semestre (1 mes)", "RN-05",
             cumplido(TipoVersionLA.DURING_S2))
     if m.fecha_llegada and semestral_s1:
-        d[(TipoPlazo.VENTANA_AMPLIACION, None)] = Deseado(
+        d[(TipoPlazo.VENTANA_AMPLIACION, None, None)] = Deseado(
             sumar_meses(m.fecha_llegada), "Fin del plazo para pedir la ampliación (1 mes desde la llegada)",
             "RN-16", cumplido(TipoVersionLA.AMPLIACION))
         preferencia = date(m.fecha_llegada.year, 11, 10)
         if m.fecha_llegada <= preferencia:
-            d[(TipoPlazo.PREFERENCIA_AMPLIACION, None)] = Deseado(
+            d[(TipoPlazo.PREFERENCIA_AMPLIACION, None, None)] = Deseado(
                 preferencia, "Las ampliaciones que llegan a la ORI antes del 10/11 tienen preferencia de financiación",
                 "RN-16", cumplido(TipoVersionLA.AMPLIACION))
     if m.fecha_llegada and (m.duracion_semestres or 1) >= 2:
-        d[(TipoPlazo.VENTANA_REDUCCION, None)] = Deseado(
+        d[(TipoPlazo.VENTANA_REDUCCION, None, None)] = Deseado(
             sumar_meses(m.fecha_llegada), "Fin del plazo para pedir la reducción a un semestre (1 mes desde la llegada)")
 
     fin_revision = {
@@ -94,14 +98,21 @@ def plazos_deseados(m) -> dict:
             EstadoVersionLA.FIRMADA: EstadoPlazo.CUMPLIDO,
             EstadoVersionLA.INVALIDADA: EstadoPlazo.DESCARTADO,
         }[EstadoVersionLA(v.estado)]
-        d[(TipoPlazo.REVISAR_LA, v.pk)] = Deseado(fin_revision[TipoVersionLA(v.tipo)], f"Revisar y firmar {v}", "", cerrar)
+        d[(TipoPlazo.REVISAR_LA, v.pk, None)] = Deseado(fin_revision[TipoVersionLA(v.tipo)], f"Revisar y firmar {v}", "", cerrar)
+
+    enviadas = list(m.actas.filter(estado=EstadoActa.ENVIADA).prefetch_related("tors"))
+    for tor in m.tors.all():
+        cerrar = EstadoPlazo.CUMPLIDO if any(tor in a.tors.all() for a in enviadas) else None
+        d[(TipoPlazo.ENVIAR_ACTA, None, tor.pk)] = Deseado(
+            tor.fecha_recepcion + timedelta(weeks=SEMANAS_ACTA),
+            f"Acta firmada a la ORI y a Administración ({tor}, 5 semanas)", "RN-15", cerrar)
     return d
 
 
 def recalcular_plazos(m) -> None:
     deseados = plazos_deseados(m)
     existentes = {
-        (p.tipo, p.version_la_id): p
+        (p.tipo, p.version_la_id, p.tor_id): p
         for p in m.plazos.filter(origen=OrigenPlazo.REGLA, tipo__in=TIPOS_RECALCULADOS)
     }
     for clave, p in existentes.items():
@@ -117,11 +128,11 @@ def recalcular_plazos(m) -> None:
         elif (p.fecha_limite, p.descripcion) != (deseado.fecha, deseado.descripcion):
             p.fecha_limite, p.descripcion = deseado.fecha, deseado.descripcion
             p.save(update_fields=["fecha_limite", "descripcion"])
-    for (tipo, version_id), deseado in deseados.items():
-        if (tipo, version_id) in existentes or deseado.cerrar:
+    for (tipo, version_id, tor_id), deseado in deseados.items():
+        if (tipo, version_id, tor_id) in existentes or deseado.cerrar:
             continue
         Plazo.objects.create(
-            movilidad=m, tipo=tipo, version_la_id=version_id, fecha_limite=deseado.fecha,
+            movilidad=m, tipo=tipo, version_la_id=version_id, tor_id=tor_id, fecha_limite=deseado.fecha,
             descripcion=deseado.descripcion, regla=deseado.regla, origen=OrigenPlazo.REGLA,
         )
 

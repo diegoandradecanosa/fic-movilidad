@@ -113,4 +113,16 @@ CORREO_ADMINISTRACION = os.environ.get("CORREO_ADMINISTRACION", "")
 DEFAULT_FROM_EMAIL = CORREO_COORDINADOR or "webmaster@localhost"
 # Al firmar un During o una ampliación, enviar el LA a Administración con copia al coordinador y al alumno.
 ENVIO_AUTOMATICO_LA = os.environ.get("ENVIO_AUTOMATICO_LA", "1") == "1"
+# Copia del «ATM de …» a la ORI.
+CORREO_ORI = os.environ.get("CORREO_ORI", "")
+
+# Acta de reconocimiento: recursos de la skill acta-reconocimiento (plantilla docx, cabecera, logo y
+# JSON de equivalencias), fuera del repositorio. Misma variable que usa la skill.
+RECURSOS_ACTA_DIR = os.environ.get("RECURSOS_ACTA_DIR", str(BASE_DIR / "privado" / "recursos_acta"))
+ACTA_FIRMANTE = os.environ.get("ACTA_FIRMANTE", "")
+ACTA_CARGO_FIRMANTE = os.environ.get("ACTA_CARGO_FIRMANTE", "Coordinador de mobilidade da Facultade de Informática")
+
+# Extracción de ToR con la API de Claude: desactivada si no hay clave.
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

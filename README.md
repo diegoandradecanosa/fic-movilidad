@@ -25,6 +25,13 @@ Correo (variables de entorno; en desarrollo los correos se imprimen en la consol
 `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`; `ENVIO_AUTOMATICO_LA=0` desactiva el envío
 automático del LA modificado. Resumen diario de plazos (cron): `python manage.py avisar_plazos`.
 
+Acta de reconocimiento (bloque 4): los recursos de la skill `acta-reconocimiento` no están en el repo.
+`RECURSOS_ACTA_DIR` apunta a `ToRs26/_recursos_acta` (plantilla docx, cabecera, logo y JSON de
+equivalencias); `ACTA_FIRMANTE` es el nombre que firma; `CORREO_ORI` recibe copia del «ATM de …».
+Importar la tabla oficial de equivalencias: `python manage.py importar_equivalencias "$RECURSOS_ACTA_DIR/equivalencias_calificaciones_espana.json"`.
+El PDF del acta se genera solo si LibreOffice (`soffice`) está instalado. Extracción de ToR con IA:
+`pip install -e ".[ia]"` y `ANTHROPIC_API_KEY` (envía el PDF del ToR a Anthropic: pendiente del DPD).
+
 ## Estado
 
 - [x] Bloque 1: importar adjudicaciones de la ORI (provisional → definitiva), expedientes de
@@ -32,4 +39,5 @@ automático del LA modificado. Resumen diario de plazos (cron): `python manage.p
 - [x] Bloque 2: versiones del acuerdo académico (Before / During), LA vigente y validaciones.
 - [x] Bloque 3: plazos y alertas («Mis pendientes», resumen diario por correo, envío del LA
       modificado a Administración).
-- [ ] Bloque 4: ToR, conversión de notas y acta ATM.
+- [x] Bloque 4: ToR (registro, extracción con IA opcional, emparejamiento con el LA), conversión de
+      notas, acta «After the Mobility» (docx, versiones y correcciones) y envío «ATM de …».
