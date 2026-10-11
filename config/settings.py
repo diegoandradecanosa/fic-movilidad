@@ -95,4 +95,22 @@ STATIC_URL = "static/"
 # .gitignore) y servidos solo a usuarios staff (ver config/urls.py).
 MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "privado" / "media"))
 MEDIA_URL = "/privado/media/"
+
+# Correo. En desarrollo se imprime en la consola; en producción, SMTP (más adelante Microsoft 365).
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
+# Buzón del vicedecanato (remitente y copia) y buzón de Administración del centro. Sin valor por
+# defecto: hasta que se configuren, los envíos quedan como tarea pendiente.
+CORREO_COORDINADOR = os.environ.get("CORREO_COORDINADOR", "")
+CORREO_ADMINISTRACION = os.environ.get("CORREO_ADMINISTRACION", "")
+DEFAULT_FROM_EMAIL = CORREO_COORDINADOR or "webmaster@localhost"
+# Al firmar un During o una ampliación, enviar el LA a Administración con copia al coordinador y al alumno.
+ENVIO_AUTOMATICO_LA = os.environ.get("ENVIO_AUTOMATICO_LA", "1") == "1"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
