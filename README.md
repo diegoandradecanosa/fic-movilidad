@@ -29,8 +29,10 @@ Acta de reconocimiento (bloque 4): los recursos de la skill `acta-reconocimiento
 `RECURSOS_ACTA_DIR` apunta a `ToRs26/_recursos_acta` (plantilla docx, cabecera, logo y JSON de
 equivalencias); `ACTA_FIRMANTE` es el nombre que firma; `CORREO_ORI` recibe copia del «ATM de …».
 Importar la tabla oficial de equivalencias: `python manage.py importar_equivalencias "$RECURSOS_ACTA_DIR/equivalencias_calificaciones_espana.json"`.
-El PDF del acta se genera solo si LibreOffice (`soffice`) está instalado. Extracción de ToR con IA:
-`pip install -e ".[ia]"` y `ANTHROPIC_API_KEY` (envía el PDF del ToR a Anthropic: pendiente del DPD).
+El PDF del acta se genera solo si LibreOffice (`soffice`) está instalado. Extracción con IA de las
+notas del ToR y de las filas del LA (acción «Proponer las filas desde el PDF con IA» en una versión
+en borrador): `pip install -e ".[ia]"` y `ANTHROPIC_API_KEY` (envía el PDF a Anthropic: pendiente
+del DPD). Lo extraído queda en borrador, con las dudas en las notas de la versión y en cada fila.
 
 ## Roles
 
@@ -50,3 +52,4 @@ contraseña de Django en `/cuentas/login/`. El admin (`/admin/`) solo lo usa Coo
       notas, acta «After the Mobility» (docx, versiones y correcciones) y envío «ATM de …».
 - [x] Bloque 5: panel de expedientes (`/`), ficha del expediente y acceso de Administración con
       anotaciones y peticiones al alumno o al coordinador.
+- [x] RF-10: importar el PDF del LA (OLA de EWP, modelo de la ORI, SICUE) con IA como borrador.

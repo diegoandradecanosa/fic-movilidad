@@ -424,6 +424,8 @@ class VersionLA(models.Model):
     pdf = models.FileField(upload_to="la/%Y/", blank=True)
     motivo = models.TextField(blank=True)
     motivo_invalidacion = models.TextField(blank=True)
+    extraido_con_ia = models.BooleanField(default=False, help_text="Filas propuestas por la IA a partir del PDF")
+    notas = models.TextField(blank=True, help_text="Lo que hay que revisar (p. ej. avisos de la extracción con IA)")
     creada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
