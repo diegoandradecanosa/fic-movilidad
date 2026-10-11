@@ -49,27 +49,34 @@ def _norm(texto) -> str:
 
 # Nombre lógico -> posibles cabeceras (normalizadas).
 COLUMNAS = {
+    # El formato cambia entre cursos: 2025/26 («Orde de preferencia», «Programa», «Ano acad.»…) y
+    # 2026/27 («orde prioridade», sin «Programa» ni «Ano acad.», «Oferta de praza»…).
     "nombre": ["nome"],
     "dni": ["dni"],
-    "titulacion": ["titulacion"],
+    "titulacion": ["titulacion", "titulacion udc"],
     "programa": ["programa"],
-    "orden": ["orde de preferencia"],
+    "orden": ["orde de preferencia", "orde prioridade", "orde de prioridade"],
     "curso": ["ano acad."],
-    "inicio": ["inicio (semestre)"],
-    "duracion": ["duracion (semestres previstos)", "duracion (semestres)"],
-    "pais": ["pais"],
-    "institucion": ["institucion"],
+    "inicio": ["inicio (semestre)", "inicio periodo"],
+    "duracion": ["duracion (semestres previstos)", "duracion (semestres)", "no de sem."],
+    "pais": ["pais", "pais destino"],
+    "institucion": ["institucion", "institucion destino"],
     "observaciones": ["observacions ori"],
     "idioma": ["certificacion de idiomas"],
-    "estado": ["estado de solicitude - interno"],
+    "estado": ["estado de solicitude - interno", "estado de solicitude-interno"],
     "nota": ["nota media"],
-    "plaza": ["plaza ofertada"],
-    "plazo": ["prazo da convocatoria"],
-    "meritos": ["outros meritos (max. 5%)"],
+    "plaza": ["plaza ofertada", "oferta de praza"],
+    "plazo": ["prazo da convocatoria", "convocatoria"],
+    "meritos": ["outros meritos (max. 5%)", "outros meritos"],
     "motivo": ["motivos rexeitamento"],
     "condiciones": ["condicions para adxudicacion"],
 }
-OBLIGATORIAS = ["nombre", "dni", "programa", "orden", "institucion", "pais", "estado", "plazo", "curso"]
+
+OBLIGATORIAS = ["nombre", "dni", "orden", "institucion", "pais", "estado", "plazo"]
+# Si faltan, se deducen: el programa de la plaza ofertada («Erasmus+ SMS - …») y el curso del
+# inicio del periodo («1º semester 2026/27»).
+ALTERNATIVAS = {"programa": "plaza", "curso": "inicio"}
+FILAS_VACIAS_FIN = 200  # algunas hojas arrastran un millón de filas vacías
 
 
 class FormatoNoReconocido(Exception):
@@ -170,6 +177,7 @@ def _mapear_cabeceras(cabecera) -> dict[str, int]:
                 mapa[clave] = i
                 break
     faltan = [c for c in OBLIGATORIAS if c not in mapa]
+    faltan += [c for c, alternativa in ALTERNATIVAS.items() if c not in mapa and alternativa not in mapa]
     if faltan:
         raise FormatoNoReconocido(f"Faltan columnas obligatorias: {', '.join(faltan)}")
     return mapa
@@ -185,10 +193,19 @@ def _leer_filas(ruta: Path):
     else:
         raise FormatoNoReconocido("No encuentro la fila de cabecera (columna 'NOME')")
     mapa = _mapear_cabeceras(cabecera)
+    vacias = 0
     for fila in filas:
         if fila is None or all(v in (None, "") for v in fila):
+            vacias += 1
+            if vacias >= FILAS_VACIAS_FIN:
+                break
             continue
-        yield {k: (fila[i] if i < len(fila) else None) for k, i in mapa.items()}
+        vacias = 0
+        f = {k: (fila[i] if i < len(fila) else None) for k, i in mapa.items()}
+        for clave, alternativa in ALTERNATIVAS.items():
+            if clave not in mapa:
+                f[clave] = f.get(alternativa)
+        yield f
 
 
 @transaction.atomic
@@ -235,7 +252,7 @@ def importar_adjudicaciones(ruta, listado: str = Listado.DEFINITIVA) -> Informe:
             "titulacion": titulacion,
             "institucion": institucion,
             "programa": parse_programa(f["programa"]),
-            "programa_texto": _texto(f["programa"]),
+            "programa_texto": _texto(f["programa"])[:100],
             "semestre_inicio": parse_semestre(f.get("inicio")),
             "duracion_semestres": _entero(f.get("duracion")),
             "plaza_ofertada": _texto(f.get("plaza")),
