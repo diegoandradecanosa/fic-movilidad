@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<p>Movilidades seleccionadas:</p>
+<ul>{% for mv in movilidades %}<li>{{ mv }} — <b>{{ mv.get_estado_display }}</b></li>{% endfor %}</ul>
+<p>Transiciones permitidas desde el estado actual:
+  {% if permitidos %}{{ permitidos|join:", " }}{% else %}ninguna (solo forzando){% endif %}.</p>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <input type="hidden" name="action" value="cambiar_estado">
+  {% for mv in movilidades %}<input type="hidden" name="_selected_action" value="{{ mv.pk }}">{% endfor %}
+  <input type="submit" value="Cambiar estado">
+</form>
+{% endblock %}
