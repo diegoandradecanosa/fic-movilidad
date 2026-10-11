@@ -49,27 +49,34 @@ def _norm(texto) -> str:
 
 # Nombre lógico -> posibles cabeceras (normalizadas).
 COLUMNAS = {
+    # El formato cambia entre cursos: 2025/26 («Orde de preferencia», «Programa», «Ano acad.»…) y
+    # 2026/27 («orde prioridade», sin «Programa» ni «Ano acad.», «Oferta de praza»…).
     "nombre": ["nome"],
     "dni": ["dni"],
-    "titulacion": ["titulacion"],
+    "titulacion": ["titulacion", "titulacion udc"],
     "programa": ["programa"],
-    "orden": ["orde de preferencia"],
+    "orden": ["orde de preferencia", "orde prioridade", "orde de prioridade"],
     "curso": ["ano acad."],
-    "inicio": ["inicio (semestre)"],
-    "duracion": ["duracion (semestres previstos)", "duracion (semestres)"],
-    "pais": ["pais"],
-    "institucion": ["institucion"],
+    "inicio": ["inicio (semestre)", "inicio periodo"],
+    "duracion": ["duracion (semestres previstos)", "duracion (semestres)", "no de sem."],
+    "pais": ["pais", "pais destino"],
+    "institucion": ["institucion", "institucion destino"],
     "observaciones": ["observacions ori"],
     "idioma": ["certificacion de idiomas"],
-    "estado": ["estado de solicitude - interno"],
+    "estado": ["estado de solicitude - interno", "estado de solicitude-interno"],
     "nota": ["nota media"],
-    "plaza": ["plaza ofertada"],
-    "plazo": ["prazo da convocatoria"],
-    "meritos": ["outros meritos (max. 5%)"],
+    "plaza": ["plaza ofertada", "oferta de praza"],
+    "plazo": ["prazo da convocatoria", "convocatoria"],
+    "meritos": ["outros meritos (max. 5%)", "outros meritos"],
     "motivo": ["motivos rexeitamento"],
     "condiciones": ["condicions para adxudicacion"],
 }
-OBLIGATORIAS = ["nombre", "dni", "programa", "orden", "institucion", "pais", "estado", "plazo", "curso"]
+
+OBLIGATORIAS = ["nombre", "dni", "orden", "institucion", "pais", "estado", "plazo"]
+# Si faltan, se deducen: el programa de la plaza ofertada («Erasmus+ SMS - …») y el curso del
+# inicio del periodo («1º semester 2026/27»).
+ALTERNATIVAS = {"programa": "plaza", "curso": "inicio"}
+FILAS_VACIAS_FIN = 200  # algunas hojas arrastran un millón de filas vacías
 
 
 class FormatoNoReconocido(Exception):
@@ -161,15 +168,21 @@ def _texto(valor) -> str:
     return "" if valor is None else str(valor).strip()
 
 
-def _mapear_cabeceras(cabecera) -> dict[str, int]:
-    norm = [_norm(c) for c in cabecera]
+def _mapear_cabeceras(cabecera, anteriores=()) -> dict[str, int]:
+    """Columnas por nombre. Si falta alguna en la fila de cabecera, se busca en las filas de encima
+    (en el 2.º plazo de 2025/26 los títulos de las últimas columnas están en la fila del título)."""
     mapa = {}
-    for clave, candidatos in COLUMNAS.items():
-        for i, c in enumerate(norm):
-            if c in candidatos:
-                mapa[clave] = i
-                break
+    for fila in (cabecera, *reversed(anteriores)):
+        norm = [_norm(c) for c in fila]
+        for clave, candidatos in COLUMNAS.items():
+            if clave in mapa:
+                continue
+            for i, c in enumerate(norm):
+                if c in candidatos and i not in mapa.values():
+                    mapa[clave] = i
+                    break
     faltan = [c for c in OBLIGATORIAS if c not in mapa]
+    faltan += [c for c, alternativa in ALTERNATIVAS.items() if c not in mapa and alternativa not in mapa]
     if faltan:
         raise FormatoNoReconocido(f"Faltan columnas obligatorias: {', '.join(faltan)}")
     return mapa
@@ -179,16 +192,34 @@ def _leer_filas(ruta: Path):
     wb = openpyxl.load_workbook(ruta, data_only=True, read_only=True)
     ws = wb.worksheets[0]
     filas = ws.iter_rows(values_only=True)
+    anteriores = []
     for cabecera in filas:
         if any(_norm(c) == "nome" for c in cabecera):
             break
+        anteriores.append(cabecera)
     else:
         raise FormatoNoReconocido("No encuentro la fila de cabecera (columna 'NOME')")
-    mapa = _mapear_cabeceras(cabecera)
+    mapa = _mapear_cabeceras(cabecera, anteriores)
+    vacias = 0
+    plazo = None
     for fila in filas:
         if fila is None or all(v in (None, "") for v in fila):
+            vacias += 1
+            if vacias >= FILAS_VACIAS_FIN:
+                break
             continue
-        yield {k: (fila[i] if i < len(fila) else None) for k, i in mapa.items()}
+        vacias = 0
+        f = {k: (fila[i] if i < len(fila) else None) for k, i in mapa.items()}
+        if _norm(f["nombre"]) == "nome":  # cabecera repetida al empezar otra sección del listado
+            continue
+        for clave, alternativa in ALTERNATIVAS.items():
+            if clave not in mapa:
+                f[clave] = f.get(alternativa)
+        # Celdas combinadas: el plazo solo viene en la primera fila del bloque.
+        if f.get("plazo") in (None, ""):
+            f["plazo"] = plazo
+        plazo = f["plazo"]
+        yield f
 
 
 @transaction.atomic
@@ -197,6 +228,7 @@ def importar_adjudicaciones(ruta, listado: str = Listado.DEFINITIVA) -> Informe:
     informe = Informe()
     vistas: dict[int, set[int]] = {}  # convocatoria_id -> ids de solicitudes presentes en el fichero
     adjudicadas: dict[tuple[int, int], list[Solicitud]] = {}
+    leidas: dict[tuple[int, int, int], str] = {}  # (convocatoria, estudiante, orden) -> estado en el fichero
 
     for f in _leer_filas(ruta):
         informe.filas += 1
@@ -235,7 +267,7 @@ def importar_adjudicaciones(ruta, listado: str = Listado.DEFINITIVA) -> Informe:
             "titulacion": titulacion,
             "institucion": institucion,
             "programa": parse_programa(f["programa"]),
-            "programa_texto": _texto(f["programa"]),
+            "programa_texto": _texto(f["programa"])[:100],
             "semestre_inicio": parse_semestre(f.get("inicio")),
             "duracion_semestres": _entero(f.get("duracion")),
             "plaza_ofertada": _texto(f.get("plaza")),
@@ -251,6 +283,16 @@ def importar_adjudicaciones(ruta, listado: str = Listado.DEFINITIVA) -> Informe:
             "listado": listado,
         }
         orden = _entero(f["orden"]) or 0
+        clave = (convocatoria.id, estudiante.id, orden)
+        if clave in leidas:
+            # El listado repite filas entre secciones (adjudicadas / lista de espera / rechazadas).
+            if leidas[clave] != _texto(f["estado"]):
+                informe.avisos.append(
+                    f"{estudiante}: la preferencia {orden} aparece dos veces con estados distintos "
+                    f"({leidas[clave]!r} y {_texto(f['estado'])!r}); se queda el primero. Revísalo"
+                )
+            continue
+        leidas[clave] = _texto(f["estado"])
         solicitud = Solicitud.objects.filter(
             convocatoria=convocatoria, estudiante=estudiante, orden_preferencia=orden
         ).first()

@@ -175,6 +175,33 @@ def test_cabecera_con_columnas_extra_y_filas_previas(tmp_path):
 
 
 @pytest.mark.django_db
+def test_cabeceras_en_la_fila_del_titulo_y_plazo_combinado(tmp_path):
+    # 2.º plazo 2025/26: los títulos de las últimas columnas están en la fila del título, la fila
+    # «NOME» trae ahí valores, y el plazo solo aparece en la primera fila de cada bloque.
+    i = CABECERA.index("Plaza ofertada")
+    titulo = [None, "LISTAXE DEFINITIVA SEGUNDO PRAZO"] + [None] * (i - 2) + CABECERA[i:]
+    cab = CABECERA[:i] + ["Erasmus+ SMS - X - OUT", "Convocatoria2", "", "Adxudicada prioridade 1", None]
+    filas = [list(f) for f in FILAS_BASE[:2]]
+    filas[1][CABECERA.index("Prazo da Convocatoria")] = None
+    ruta = excel(tmp_path, filas, cabecera=cab, prefijo=[titulo])
+    informe = importar_adjudicaciones(ruta)
+    assert informe.filas == 2
+    assert {s.convocatoria.plazo for s in Solicitud.objects.all()} == {1}
+    assert Solicitud.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_secciones_con_cabecera_repetida_y_filas_duplicadas(tmp_path):
+    rechazada = list(FILAS_BASE[0])
+    rechazada[CABECERA.index("Estado de solicitude - interno")] = "Rexeitada"
+    filas = FILAS_BASE[:2] + [[], ["2. ALUMNADO EN LISTAXE DE AGARDA"], CABECERA, FILAS_BASE[1], rechazada]
+    informe = importar_adjudicaciones(excel(tmp_path, filas))
+    assert Solicitud.objects.count() == 2
+    assert Movilidad.objects.count() == 1
+    assert len([a for a in informe.avisos if "dos veces" in a]) == 1
+
+
+@pytest.mark.django_db
 def test_formato_no_reconocido(tmp_path):
     ruta = excel(tmp_path, [["x"]], cabecera=["NOME", "Otra cosa"])
     with pytest.raises(FormatoNoReconocido):
@@ -191,3 +218,53 @@ def test_transiciones_de_estado(tmp_path):
     ana.cambiar_estado(EstadoMovilidad.LA_PREPARACION)
     assert ana.eventos.count() == 3
     assert ana.eventos.first().estado_nuevo == EstadoMovilidad.LA_PREPARACION
+
+
+# --- formato de 2026/27 (sin «Programa» ni «Ano acad.», columnas renombradas) ----------------------
+
+CABECERA_2026 = [
+    "Centro UDC", "NOME", "DNI", "Titulación UDC", "Inicio periodo", "Nº de sem.", "Orde prioridade",
+    "País destino", "Institución destino", "Oferta de praza", "Observacións ORI", "Certificación idiomas",
+    "Condicións para adxudicación", "Estado de solicitude-interno", "Nota media", "Convocatoria",
+    "Outros méritos", "Motivos rexeitamento",
+]
+
+
+def fila_2026(nombre, dni, orden, pais, inst, estado, oferta=None, inicio="1º semester 2026/27", sem=2):
+    oferta = oferta or f"Erasmus+ SMS - {inst} - OUT - F. Informática - Grao en Enxeñaría Informática (longo)"
+    return ["Facultade de Informática", nombre, dni, GEI, inicio, sem, orden, pais, inst, oferta, "", "B2", "",
+            estado, "7,1", "Convocatoria1", "", ""]
+
+
+@pytest.mark.django_db
+def test_formato_2026_27(tmp_path):
+    filas = [
+        fila_2026("Mera Sar, Lois", "66666666Q", 1, "Poland", "Uniwersytet Ficticio", "adxudicatario"),
+        fila_2026("Mera Sar, Lois", "66666666Q", 2, "Norway", "Universitetet Ficticio", "rexeitado"),
+        fila_2026("Pena Gil, Sabela", "77777777B", 1, "Poland", "Uniwersytet Ficticio", "listaxe de agarda 1"),
+        fila_2026("Rial Vaz, Iago", "88888888Y", 1, "Chile", "Universidad Ficticia", "Suplente1",
+                  oferta="Bilateral SM estudios - Universidad Ficticia - OUT", inicio="2º semester 2026/27", sem=1),
+    ]
+    # la hoja real del 1.er plazo arrastra muchísimas filas vacías al final
+    ruta = excel(tmp_path, filas + [[None] * len(CABECERA_2026)] * 300 + [fila_2026("Fantasma, X", "1X", 1, "Peru", "U", "x")],
+                 cabecera=CABECERA_2026)
+    informe = importar_adjudicaciones(ruta)
+    assert informe.filas == 4  # se deja de leer tras 200 filas vacías seguidas
+    lois = Solicitud.objects.get(estudiante__nombre_completo="Mera Sar, Lois", orden_preferencia=1)
+    assert (lois.convocatoria.curso, lois.convocatoria.plazo) == ("2026/27", 1)
+    assert lois.programa == Programa.ERASMUS and len(lois.programa_texto) <= 100
+    assert (lois.semestre_inicio, lois.duracion_semestres, lois.estado) == (1, 2, EstadoSolicitud.ADJUDICADA)
+    assert Solicitud.objects.get(estudiante__nombre_completo="Pena Gil, Sabela").estado == EstadoSolicitud.LISTA_ESPERA
+    iago = Solicitud.objects.get(estudiante__nombre_completo="Rial Vaz, Iago")
+    assert (iago.programa, iago.estado, iago.numero_suplente, iago.semestre_inicio) == (
+        Programa.BILATERAL, EstadoSolicitud.SUPLENTE, 1, 2)
+    assert Movilidad.objects.get().estudiante.nombre_completo == "Mera Sar, Lois"
+
+
+@pytest.mark.django_db
+def test_sin_programa_ni_plaza_no_se_reconoce(tmp_path):
+    cabecera = [c for c in CABECERA_2026 if c != "Oferta de praza"]
+    fila = fila_2026("A, B", "11111111H", 1, "Poland", "U", "adxudicatario")
+    del fila[CABECERA_2026.index("Oferta de praza")]
+    with pytest.raises(FormatoNoReconocido, match="programa"):
+        importar_adjudicaciones(excel(tmp_path, [fila], cabecera=cabecera))
