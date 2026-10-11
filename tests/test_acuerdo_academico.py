@@ -210,14 +210,25 @@ def test_la_vigente_aplica_altas_y_bajas_en_orden(mov, before):
         (A, 1, [nueva], [before["u2"]]),
     ])
     la = la_vigente(mov)
+    # el cambio de materia ocupa el sitio de la que sale (mismo orden que el acta firmada)
     assert [(g.materias_destino, g.materias_udc) for g in la.grupos] == [
         ([before["d1"]], [before["u1"]]),
-        ([before["d3"]], [before["u3"]]),
         ([nueva], [before["u2"]]),
+        ([before["d3"]], [before["u3"]]),
     ]
     assert la.ects_udc() == la.ects_destino() == 18
     assert la.incidencias == []
     assert [b.asignatura for b in la.bajas] == [before["d2"], before["u2"]]
+
+
+def test_alta_antes_que_la_baja_y_altas_sin_hueco_van_al_final(mov, before):
+    d4, d5 = dest(mov, "Destino 4"), dest(mov, "Destino 5")
+    version(mov, tipo=TipoVersionLA.DURING_S1, filas=[
+        (A, 1, [d4], [before["u1"]]),
+        (A, 1, [d5], []),
+        (B, 1, [before["d1"]], [before["u1"]]),
+    ])
+    assert [g.materias_destino for g in la_vigente(mov).grupos] == [[d4], [before["d2"]], [before["d3"]], [d5]]
 
 
 def test_borrador_e_invalidada_no_cuentan(mov, before):

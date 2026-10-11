@@ -236,7 +236,7 @@ class RelacionDestinoAdmin(admin.ModelAdmin):
 
 @admin.register(m.AsignaturaUDC)
 class AsignaturaUDCAdmin(admin.ModelAdmin):
-    list_display = ["codigo", "nombre", "ects", "curso", "cuatrimestre", "titulacion", "curso_academico"]
+    list_display = ["codigo", "codigo_oficial", "nombre", "ects", "curso", "cuatrimestre", "titulacion", "curso_academico"]
     list_filter = ["curso_academico", "tipo", "titulacion", "cuatrimestre"]
     search_fields = ["codigo", "codigo_oficial", "nombre"]
 

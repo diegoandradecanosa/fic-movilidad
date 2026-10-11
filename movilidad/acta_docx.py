@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
-from datetime import date
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -23,13 +22,10 @@ from django.core.files.base import ContentFile
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
-MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
-         "octubre", "noviembre", "diciembre"]
-
 FIRMA_XML = (
     '<w:p><w:pPr><w:rPr><w:lang w:val="es-ES"/></w:rPr></w:pPr></w:p>'
     '<w:p><w:pPr><w:jc w:val="right"/><w:rPr><w:u w:val="single"/></w:rPr></w:pPr>'
-    '<w:r><w:t xml:space="preserve">A Coruña, {fecha}</w:t></w:r></w:p>'
+    '<w:r><w:t xml:space="preserve">A Coruña, en la fecha que figura en la firma digital</w:t></w:r></w:p>'
     '<w:p><w:pPr><w:jc w:val="right"/><w:rPr><w:lang w:val="es-ES"/></w:rPr></w:pPr>'
     '<w:r><w:rPr><w:lang w:val="es-ES"/></w:rPr><w:t xml:space="preserve">Asdo: {firmante}</w:t></w:r></w:p>'
     '<w:p><w:pPr><w:jc w:val="right"/><w:rPr><w:lang w:val="es-ES"/></w:rPr></w:pPr>'
@@ -55,10 +51,6 @@ def recurso(nombre) -> Path:
             f"ToRs26/_recursos_acta (plantilla_simplificado.docx, header1_template.xml, erasmus_logo.png)."
         )
     return ruta
-
-
-def fecha_es(d: date) -> str:
-    return f"{d.day} de {MESES[d.month - 1]} de {d.year}"
 
 
 def curso_largo(curso: str) -> str:
@@ -173,8 +165,7 @@ def rellenar(documento, acta, filas_c, filas_d):
         tr.getparent().remove(tr)
 
 
-def construir_docx(acta, hoy: date | None = None) -> bytes:
-    hoy = hoy or date.today()
+def construir_docx(acta) -> bytes:
     m = acta.movilidad
     documento = docx.Document(str(recurso("plantilla_simplificado.docx")))
     rellenar(documento, acta, list(acta.filas_c.all()), list(acta.filas_d.all()))
@@ -183,7 +174,7 @@ def construir_docx(acta, hoy: date | None = None) -> bytes:
 
     entrada = zipfile.ZipFile(io.BytesIO(buffer.getvalue()))
     xml = entrada.read("word/document.xml").decode("utf-8")
-    firma = FIRMA_XML.format(fecha=escape(fecha_es(hoy)), firmante=escape(settings.ACTA_FIRMANTE),
+    firma = FIRMA_XML.format(firmante=escape(settings.ACTA_FIRMANTE),
                              cargo=escape(settings.ACTA_CARGO_FIRMANTE))
     cola = COLA_PLANTILLA.search(xml)
     if cola:

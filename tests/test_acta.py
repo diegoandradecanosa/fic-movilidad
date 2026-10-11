@@ -397,12 +397,12 @@ def test_reemplazar_texto_partido_y_curso():
 
 def test_construir_docx(caso, recursos):
     acta = generar_borrador(caso["mov"])
-    contenido = construir_docx(acta, hoy=date(2027, 2, 15))
+    contenido = construir_docx(acta)
     z = zipfile.ZipFile(io.BytesIO(contenido))
     cabecera = z.read("word/header1.xml").decode()
     assert "Uxía Proba Exemplo" in cabecera and "2026/2027" in "".join(cabecera.split("</w:t></w:r><w:r><w:t>"))
     cuerpo = z.read("word/document.xml").decode()
-    assert "A Coruña, 15 de febrero de 2027" in cuerpo and "Asdo: Persoa Coordinadora" in cuerpo
+    assert "A Coruña, en la fecha que figura en la firma digital" in cuerpo and "Asdo: Persoa Coordinadora" in cuerpo
     tabla = docx.Document(io.BytesIO(contenido)).tables[0]
     textos = [[c.text for c in f.cells] for f in tabla.rows]
     assert len(textos) == 2 + 7 + 1 + 1 + 5 + 1  # filas vacías sobrantes eliminadas

@@ -322,7 +322,7 @@ class AsignaturaUDC(_ECTSBloqueadosAlFirmar):
     titulacion = models.ForeignKey(Titulacion, on_delete=models.PROTECT, related_name="asignaturas")
     tipo = models.CharField(max_length=10, blank=True, help_text="Grao / Máster")
     codigo = models.CharField(max_length=10, help_text="Código de materia, p. ej. 200188")
-    codigo_oficial = models.CharField(max_length=12, blank=True, help_text="Código 614G01xxx de los OLA")
+    codigo_oficial = models.CharField(max_length=12, blank=True, help_text="Código antiguo (614G01xxx) si aparece en el LA; el acta lo usa en lugar del vigente")
     nombre = models.CharField(max_length=255)
     ects = models.DecimalField(max_digits=5, decimal_places=2)
     curso = models.CharField(max_length=5, blank=True, help_text="1, 2… o rango (3-4)")

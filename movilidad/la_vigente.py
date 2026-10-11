@@ -8,6 +8,8 @@ Nunca se guarda ni se edita: se recalcula cada vez desde las versiones.
 - Fila BAJA: quita sus materias de los grupos del mismo semestre; los grupos que se quedan vacíos
   desaparecen y los que pierden solo una parte (p. ej. −B en A+B → X) se conservan con una
   incidencia para que el coordinador lo revise.
+- En cada versión se aplican primero las bajas; las altas del mismo semestre ocupan el sitio de los
+  grupos que han desaparecido (un cambio de materia no la manda al final del acta).
 """
 
 from dataclasses import dataclass, field
@@ -97,22 +99,35 @@ def versiones_aplicables(movilidad, incluir=None) -> list:
     return sorted(vigentes, key=lambda v: (raiz(v), v.numero or 0))
 
 
+@dataclass
+class _Hueco:
+    """Sitio que deja un grupo dado de baja, mientras se aplica su versión."""
+    semestre: int
+
+
 def la_vigente(movilidad, incluir=None) -> LAVigente:
     la = LAVigente()
     for version in versiones_aplicables(movilidad, incluir):
         la.versiones.append(version)
-        filas = version.filas.all() if version.pk else []
-        for fila in filas:
+        filas = list(version.filas.all()) if version.pk else []
+        for fila in sorted(filas, key=lambda f: f.accion != AccionFila.BAJA):
             if fila.accion == AccionFila.ALTA:
-                la.grupos.append(Grupo(
+                grupo = Grupo(
                     semestre=fila.semestre,
                     materias_destino=list(fila.materias_destino.all()),
                     materias_udc=list(fila.materias_udc.all()),
                     sin_reconocimiento=fila.sin_reconocimiento,
                     versiones=[version],
-                ))
+                )
+                hueco = next((i for i, g in enumerate(la.grupos)
+                              if isinstance(g, _Hueco) and g.semestre == fila.semestre), None)
+                if hueco is None:
+                    la.grupos.append(grupo)
+                else:
+                    la.grupos[hueco] = grupo
             else:
                 _aplicar_baja(la, version, fila)
+        la.grupos = [g for g in la.grupos if not isinstance(g, _Hueco)]
     return la
 
 
@@ -122,7 +137,8 @@ def _aplicar_baja(la, version, fila):
         for asignatura in materias:
             la.bajas.append(Baja(fila.semestre, version, asignatura))
             grupo = next(
-                (g for g in la.grupos if g.semestre == fila.semestre and asignatura in getattr(g, lado)), None
+                (g for g in la.grupos if isinstance(g, Grupo) and g.semestre == fila.semestre
+                 and asignatura in getattr(g, lado)), None
             )
             if grupo is None:
                 la.incidencias.append(
@@ -135,7 +151,7 @@ def _aplicar_baja(la, version, fila):
                 tocados.append(grupo)
     for grupo in tocados:
         if grupo.vacio:
-            la.grupos.remove(grupo)
+            la.grupos[next(i for i, g in enumerate(la.grupos) if g is grupo)] = _Hueco(grupo.semestre)
         elif not grupo.sin_reconocimiento and (not grupo.materias_destino or not grupo.materias_udc):
             la.incidencias.append(f"{version}: la baja deja la correspondencia incompleta: {grupo}")
         else:
