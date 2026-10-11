@@ -12,14 +12,16 @@ Port de lib_grades.py (skill acta-reconocimiento) sobre el modelo EscalaNotas, c
   debajo del aprobado: 5 × nota / nota mínima de aprobado (p. ej. 12 sobre aprobado 18 → 3,33).
   Las letras de suspenso ECTS (F, FX) valen 4 (criterio del coordinador). Si no se puede (otras
   letras, escalas en las que menos es mejor), queda «Suspenso» para completar.
-- «2 por 1» con alguna parte suspensa: la UDC queda suspensa con min(4, media ponderada por ECTS
-  de las notas equivalentes de todas las partes) (criterio del coordinador, 10/2026).
-- «2 por 1»: media ponderada por ECTS. Con la misma escala se pondera la nota original y se
-  convierte una vez; si no se puede (letras, escalas distintas), se convierte cada una y se pondera.
+- Si el ToR da una materia por no superada aunque la escala la aprobaría, está suspensa:
+  min(4, nota convertida).
+- «2 por 1»: media ponderada por ECTS de las notas ya convertidas (Regl. 3/2025 art. 25.2). Con
+  alguna parte suspensa, la UDC queda suspensa con min(4, esa media).
+- La nota final se redondea hacia arriba al primer decimal (6,54 → 6,6); un suspenso no pasa de
+  4,9. (Criterios del coordinador, 10/2026.)
 """
 
 from dataclasses import dataclass, field
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 
 SUSPENSO = "Suspenso"
 NO_PRESENTADO = "No presentado"
@@ -117,11 +119,29 @@ def elegir_escala(escalas, notas, minima=None, maxima=None) -> EleccionEscala | 
     return EleccionEscala(mejor, bool(motivo), conflictos, "; ".join(motivo))
 
 
+def redondear(valor, suspenso=False) -> Decimal:
+    """Hacia arriba al primer decimal (6,54 → 6,6; 8 → 8); un suspenso se queda en 4,9 como mucho."""
+    d = Decimal(str(valor)).quantize(Decimal("0.000001"))  # sin el ruido de los float (6,2000001)
+    d = d.quantize(Decimal("0.1"), rounding=ROUND_CEILING)
+    return min(d, Decimal("4.9")) if suspenso else d
+
+
 @dataclass
 class Resultado:
-    nota: str            # '8,5', 'Suspenso' o 'No presentado'
+    nota: str            # '8,5', 'Suspenso (4)', 'Suspenso' o 'No presentado'
     superada: bool
     detalle: str
+    valor: Decimal | None = None  # equivalente sin redondear, para las medias del «2 por 1»
+
+
+def _aprobado(valor, detalle) -> Resultado:
+    final = redondear(valor)
+    return Resultado(formatear(final), True, detalle, Decimal(str(valor)))
+
+
+def _suspenso(valor, detalle) -> Resultado:
+    final = redondear(valor, suspenso=True)
+    return Resultado(f"{SUSPENSO} ({formatear(final)})", False, detalle, Decimal(str(valor)))
 
 
 # Marcas de ausencia: «No presentado». Cualquier otra nota no superada (4,9, F, U…) es «Suspenso».
@@ -159,7 +179,11 @@ def equivalente_suspenso(escala, nota):
 
 def resultado_linea(escala, nota, superada_declarada=None) -> Resultado:
     """Resultado de una sola materia de destino (superada_declarada: True/False/None = según nota)."""
-    eq = None if superada_declarada is False else convertir(escala, nota)
+    eq = convertir(escala, nota)
+    if eq is not None and superada_declarada is False:
+        valor = min(eq["equivalente_5_10"], 4)
+        return _suspenso(valor, f"{nota}: no superada según el ToR (la escala daría "
+                                f"{formatear(eq['equivalente_5_10'])}) → mín(4, …) = {formatear(valor)}")
     if eq is None and superada_declarada is True and not es_ausencia(nota):
         return Resultado("", True, f"superada según el ToR, pero «{nota}» no está en la escala: revisar")
     if eq is None:
@@ -168,53 +192,30 @@ def resultado_linea(escala, nota, superada_declarada=None) -> Resultado:
         equivalente = equivalente_suspenso(escala, nota)
         if equivalente:
             valor, como = equivalente
-            return Resultado(f"{SUSPENSO} ({formatear(valor)})", False,
-                             f"{nota}: no superada → {formatear(valor)} ({como})")
+            return _suspenso(valor, f"{nota}: no superada → {formatear(valor)} ({como})")
         return Resultado(SUSPENSO, False, f"{nota}: no superada, sin equivalente numérico: indícalo")
-    return Resultado(formatear(eq["equivalente_5_10"]), True,
-                     f"{nota} → {formatear(eq['equivalente_5_10'])} ({escala.id_escala})")
-
-
-def _valor(nota):
-    """'8,5' → 8.5; 'Suspenso (3,33)' → 3.33; 'Suspenso' / 'No presentado' / '' → None."""
-    texto = nota.removeprefix(SUSPENSO).strip(" ()")
-    numero = parse_numero(texto) if texto else None
-    return Decimal(str(numero)) if numero is not None else None
+    valor = eq["equivalente_5_10"]
+    return _aprobado(valor, f"{nota} → {formatear(valor)} ({escala.id_escala})")
 
 
 def combinar(componentes) -> Resultado:
     """componentes: [(escala, nota_original, ects, superada_declarada)] de las materias de destino
-    que reconocen una misma materia UDC. Si alguna no está superada, la UDC no se reconoce."""
+    que reconocen una misma materia UDC: media ponderada por ECTS de las notas convertidas."""
     resultados = [resultado_linea(e, n, s) for e, n, _, s in componentes]
     if len(componentes) == 1:
         return resultados[0]
+    detalle = "; ".join(r.detalle for r in resultados)
     fallidas = [r for r in resultados if not r.superada]
+    valores = [r.valor for r in resultados]
+    if None not in valores and (not fallidas or any(r.nota.startswith(SUSPENSO) for r in fallidas)):
+        total = sum(Decimal(str(c[2])) for c in componentes)
+        media = sum(v * Decimal(str(c[2])) for v, c in zip(valores, componentes)) / total
+        if not fallidas:
+            return _aprobado(media, f"media ponderada por ECTS de las notas convertidas: {detalle} → {formatear(media)}")
+        valor = min(media, Decimal(4))
+        return _suspenso(valor, f"{detalle} → media ponderada {formatear(media)}; suspensa: mín(4, media) = "
+                                f"{formatear(valor)}")
     if fallidas:
-        valores = [_valor(r.nota) for r in resultados]
-        if any(r.nota.startswith(SUSPENSO) for r in fallidas) and None not in valores:
-            total = sum(Decimal(str(c[2])) for c in componentes)
-            media = sum(v * Decimal(str(c[2])) for v, c in zip(valores, componentes)) / total
-            nota = min(media, Decimal(4))
-            return Resultado(f"{SUSPENSO} ({formatear(nota)})", False,
-                             "; ".join(r.detalle for r in resultados)
-                             + f" → media ponderada {formatear(media)}; suspensa: mín(4, media) = {formatear(nota)}")
         nota = SUSPENSO if any(r.nota.startswith(SUSPENSO) for r in fallidas) else NO_PRESENTADO
-        return Resultado(nota, False, "; ".join(r.detalle for r in resultados)
-                         + " → no se reconoce; falta la nota de alguna parte: indícala")
-    sin_nota = [r for r in resultados if not r.nota]
-    if sin_nota:
-        return Resultado("", True, "; ".join(r.detalle for r in resultados))
-    total = sum(Decimal(str(c[2])) for c in componentes)
-    escalas = {c[0].pk for c in componentes}
-    numeros = [parse_numero(c[1]) for c in componentes]
-    if len(escalas) == 1 and None not in numeros:
-        ponderada = sum(Decimal(str(n)) * Decimal(str(c[2])) for n, c in zip(numeros, componentes)) / total
-        eq = convertir(componentes[0][0], float(ponderada))
-        if eq:
-            return Resultado(formatear(eq["equivalente_5_10"]), True,
-                             f"media ponderada de las notas originales {formatear(ponderada)} → "
-                             f"{formatear(eq['equivalente_5_10'])}")
-    ponderada = sum(Decimal(r.nota.replace(",", ".")) * Decimal(str(c[2]))
-                    for r, c in zip(resultados, componentes)) / total
-    return Resultado(formatear(ponderada), True,
-                     "media ponderada por ECTS de las notas convertidas: " + "; ".join(r.detalle for r in resultados))
+        return Resultado(nota, False, f"{detalle} → no se reconoce; falta la nota de alguna parte: indícala")
+    return Resultado("", True, detalle)

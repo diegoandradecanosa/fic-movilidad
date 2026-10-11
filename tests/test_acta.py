@@ -36,7 +36,8 @@ from movilidad.models import (
     ToR,
     VersionLA,
 )
-from movilidad.notas import NO_PRESENTADO, SUSPENSO, combinar, convertir, elegir_escala, formatear, resultado_linea
+from movilidad.notas import (NO_PRESENTADO, SUSPENSO, combinar, convertir, elegir_escala, formatear, redondear,
+                             resultado_linea)
 from tests.test_acuerdo_academico import A, dest, gei, mov, udc, version  # noqa: F401 (fixtures)
 
 pytestmark = pytest.mark.django_db
@@ -81,15 +82,16 @@ def test_elegir_escala_y_ambiguedad():
 
 def test_resultado_de_una_materia(escala_pt):
     assert resultado_linea(escala_pt, "27").nota == "8,6"
-    # suspenso numérico: equivalente proporcional al mínimo de aprobado (5 × 15 / 18 = 4,17)
-    assert resultado_linea(escala_pt, "15").nota == "Suspenso (4,17)"
+    # suspenso numérico: equivalente proporcional al mínimo de aprobado (5 × 15 / 18 = 4,17 → 4,2)
+    assert resultado_linea(escala_pt, "15").nota == "Suspenso (4,2)"
     assert resultado_linea(escala_pt, "0").nota == "Suspenso (0)"
     assert resultado_linea(escala_pt, "F").nota == resultado_linea(escala_pt, "fx").nota == "Suspenso (4)"
     assert resultado_linea(escala_pt, "U").nota == SUSPENSO  # otra letra: sin equivalente, se completa a mano
     assert resultado_linea(escala_pt, "ABS").nota == NO_PRESENTADO
     assert resultado_linea(escala_pt, "").nota == NO_PRESENTADO
-    # el ToR la da por no superada aunque la escala la aprueba: sin número, para revisar
-    assert resultado_linea(escala_pt, "27", superada_declarada=False).nota == SUSPENSO
+    # el ToR la da por no superada aunque la escala la aprueba (8,6): suspensa con mín(4, 8,6)
+    assert resultado_linea(escala_pt, "27", superada_declarada=False).nota == "Suspenso (4)"
+    assert resultado_linea(escala_pt, "18", superada_declarada=False).nota == "Suspenso (4)"
     # escala en la que menos es mejor (1 = sobresaliente): no se inventa el equivalente
     invertida = escala("DE", "1,0-4,0", {"1,0": 10, "2,0": 8, "3,0": 6.5, "4,0": 5})
     assert resultado_linea(invertida, "5,0").nota == SUSPENSO
@@ -97,20 +99,27 @@ def test_resultado_de_una_materia(escala_pt):
     assert revisar.nota == "" and revisar.superada and "revisar" in revisar.detalle
 
 
+def test_redondeo_hacia_arriba_al_primer_decimal():
+    assert [formatear(redondear(v)) for v in (6.54, 9.43, 8, 8.33, 6.2000000001)] == ["6,6", "9,5", "8", "8,4", "6,2"]
+    assert formatear(redondear(4.95, suspenso=True)) == "4,9"
+
+
 def test_dos_por_uno_media_ponderada(escala_pt):
-    # misma escala: se pondera la nota original (27·3 + 30·6)/9 = 29 y se convierte una vez
+    # media ponderada de las notas ya convertidas (Regl. 25.2): (8,6·3 + 9,8·6)/9 = 9,4
     r = combinar([(escala_pt, "27", 3, None), (escala_pt, "30", 6, None)])
     assert (r.nota, r.superada) == ("9,4", True)
-    # letras (no promediables): se convierte cada una y se pondera (6,5·2 + 8,5·4)/6 = 7,83
+    # (5·5 + 9,8·5)/10 = 7,4 (con la nota original, (18+30)/2 = 24 → 7,4: coincide por la escala lineal)
+    assert combinar([(escala_pt, "18", 5, None), (escala_pt, "30", 5, None)]).nota == "7,4"
+    # letras: (6,5·2 + 8,5·4)/6 = 7,83 → 7,9 (hacia arriba)
     letras = escala("SE", "VG(2)", {"G": 6.5, "VG": 8.5})
-    assert combinar([(letras, "G", 2, None), (letras, "VG", 4, None)]).nota == "7,83"
+    assert combinar([(letras, "G", 2, None), (letras, "VG", 4, None)]).nota == "7,9"
     # si una no está superada, la UDC no se reconoce
     assert combinar([(escala_pt, "27", 3, None), (escala_pt, "ABS", 3, None)]).nota == NO_PRESENTADO
     # con una parte suspensa: suspensa con mín(4, media ponderada): (8,6·3 + 3,33·3)/6 = 5,97 → 4
     r = combinar([(escala_pt, "27", 3, None), (escala_pt, "12", 3, None)])
     assert (r.nota, r.superada) == ("Suspenso (4)", False)
-    # (5·1 + 0·5)/6 = 0,83 < 4: se queda la media
-    assert combinar([(escala_pt, "18", 1, None), (escala_pt, "0", 5, None)]).nota == "Suspenso (0,83)"
+    # (5·1 + 0·5)/6 = 0,83 < 4: se queda la media, hacia arriba
+    assert combinar([(escala_pt, "18", 1, None), (escala_pt, "0", 5, None)]).nota == "Suspenso (0,9)"
     # suspenso sin número (otra letra): sin nota, para completar
     assert combinar([(escala_pt, "27", 3, None), (escala_pt, "U", 3, None)]).nota == SUSPENSO
 
@@ -179,7 +188,7 @@ def test_los_suspensos_no_vuelven_ambigua_la_escala(mov, gei, escala_pt):
     nuevo_tor(mov, [("X", 6, "27", d1), ("Y", 6, "12", d2)])  # 12: suspenso, no está en ninguna escala
     acta = generar_borrador(mov)
     assert not any("ambigua" in a for a in acta.avisos)
-    assert [f.nota for f in acta.filas_d.all()] == ["8,6", "Suspenso (3,33)"]
+    assert [f.nota for f in acta.filas_d.all()] == ["8,6", "Suspenso (3,4)"]
 
 
 def test_lineas_de_un_tor_aceptado_no_se_tocan(mov):
