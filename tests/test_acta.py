@@ -84,7 +84,8 @@ def test_resultado_de_una_materia(escala_pt):
     # suspenso numérico: equivalente proporcional al mínimo de aprobado (5 × 15 / 18 = 4,17)
     assert resultado_linea(escala_pt, "15").nota == "Suspenso (4,17)"
     assert resultado_linea(escala_pt, "0").nota == "Suspenso (0)"
-    assert resultado_linea(escala_pt, "F").nota == SUSPENSO  # letra: sin equivalente, se completa a mano
+    assert resultado_linea(escala_pt, "F").nota == resultado_linea(escala_pt, "fx").nota == "Suspenso (4)"
+    assert resultado_linea(escala_pt, "U").nota == SUSPENSO  # otra letra: sin equivalente, se completa a mano
     assert resultado_linea(escala_pt, "ABS").nota == NO_PRESENTADO
     assert resultado_linea(escala_pt, "").nota == NO_PRESENTADO
     # el ToR la da por no superada aunque la escala la aprueba: sin número, para revisar

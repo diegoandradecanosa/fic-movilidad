@@ -10,7 +10,8 @@ Port de lib_grades.py (skill acta-reconocimiento) sobre el modelo EscalaNotas, c
 - Suspenso con nota numérica: se le da su equivalente (Regl. 3/2025 art. 25.1: cuentan todas las
   calificaciones). Como la tabla oficial no tiene suspensos, se escala de forma proporcional por
   debajo del aprobado: 5 × nota / nota mínima de aprobado (p. ej. 12 sobre aprobado 18 → 3,33).
-  Si no se puede (letras, escalas en las que menos es mejor), queda «Suspenso» para completar.
+  Las letras de suspenso ECTS (F, FX) valen 4 (criterio del coordinador). Si no se puede (otras
+  letras, escalas en las que menos es mejor), queda «Suspenso» para completar.
 - «2 por 1»: media ponderada por ECTS. Con la misma escala se pondera la nota original y se
   convierte una vez; si no se puede (letras, escalas distintas), se convierte cada una y se pondera.
 """
@@ -130,8 +131,15 @@ def es_ausencia(nota) -> bool:
     return (nota or "").strip().upper().rstrip(".") in AUSENCIA
 
 
+# Suspensos ECTS por letra: equivalente fijo (criterio del coordinador, 10/2026).
+SUSPENSO_LETRA = {"F": 4, "FX": 4, "FX/F": 4, "F/FX": 4}
+
+
 def equivalente_suspenso(escala, nota):
-    """Nota española (< 5) de un suspenso numérico, proporcional al mínimo de aprobado, o None."""
+    """(nota española < 5, explicación) de un suspenso, o None si no hay forma de calcularla."""
+    letra = str(nota or "").strip().upper().replace(" ", "")
+    if letra in SUSPENSO_LETRA:
+        return SUSPENSO_LETRA[letra], f"{letra} = {SUSPENSO_LETRA[letra]}"
     numero = parse_numero(nota)
     if escala is None or numero is None:
         return None
@@ -143,7 +151,8 @@ def equivalente_suspenso(escala, nota):
     mejor = max(pares, key=lambda p: p[1])[0]
     if mejor <= aprobado or aprobado <= 0 or not 0 <= numero < aprobado:
         return None  # escala invertida (1 = mejor) o la nota no está por debajo del aprobado
-    return min(5 * numero / aprobado, 4.99), aprobado
+    valor = min(5 * numero / aprobado, 4.99)
+    return valor, f"5 × {nota} / {formatear(aprobado)}, mínimo de aprobado"
 
 
 def resultado_linea(escala, nota, superada_declarada=None) -> Resultado:
@@ -156,10 +165,9 @@ def resultado_linea(escala, nota, superada_declarada=None) -> Resultado:
             return Resultado(NO_PRESENTADO, False, f"«{nota or 'sin nota'}»: no presentado")
         equivalente = equivalente_suspenso(escala, nota)
         if equivalente:
-            valor, aprobado = equivalente
+            valor, como = equivalente
             return Resultado(f"{SUSPENSO} ({formatear(valor)})", False,
-                             f"{nota}: no superada → {formatear(valor)} (5 × {nota} / {formatear(aprobado)}, "
-                             f"mínimo de aprobado)")
+                             f"{nota}: no superada → {formatear(valor)} ({como})")
         return Resultado(SUSPENSO, False, f"{nota}: no superada, sin equivalente numérico: indícalo")
     return Resultado(formatear(eq["equivalente_5_10"]), True,
                      f"{nota} → {formatear(eq['equivalente_5_10'])} ({escala.id_escala})")
