@@ -3,7 +3,14 @@
 {% block contenido %}
 <div class="tarjeta" style="max-width:380px;margin:3rem auto">
   <h1>Entrar</h1>
-  <p class="suave">Más adelante se entrará con la cuenta UDC.</p>
+  {% if error_entra %}
+  <p class="bloqueo">No se pudo entrar con la cuenta UDC. Si es la primera vez, pide al coordinador de
+    movilidad que te dé de alta con tu correo de la UDC.</p>
+  {% endif %}
+  {% if entra_activo %}
+  <p><a class="boton" href="/oidc/authenticate/?next={{ next|default:'/'|urlencode }}">Entrar con la cuenta UDC</a></p>
+  <details><summary class="suave">Usuario y contraseña de la aplicación</summary>
+  {% endif %}
   <form method="post">{% csrf_token %}
     {% if form.errors %}<p class="bloqueo">Usuario o contraseña incorrectos.</p>{% endif %}
     <p><label>Usuario<br>{{ form.username }}</label></p>
@@ -11,5 +18,6 @@
     <input type="hidden" name="next" value="{{ next }}">
     <button class="boton" type="submit">Entrar</button>
   </form>
+  {% if entra_activo %}</details>{% endif %}
 </div>
 {% endblock %}
