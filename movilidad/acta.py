@@ -6,8 +6,9 @@
 - `generar_borrador(movilidad)`: construye las tablas C y D con los ToR aceptados y el LA vigente,
   con los avisos que hay que revisar antes de firmar. Reglas fijas de la skill acta-reconocimiento:
   la materia no superada va siempre en la tabla C (ECTS nominales, nota literal) y en la tabla D
-  con 0 ECTS y «Suspenso» / «No presentado»; el «2 por 1» lleva media ponderada; lo que no está en
-  el LA solo va en la tabla C.
+  con 0 ECTS y «Suspenso (nota equivalente)» / «No presentado»; la materia del LA que no aparece en
+  el ToR de su semestre va como «No presentado»; el «2 por 1» lleva media ponderada; lo que no está
+  en el LA solo va en la tabla C.
 - `crear_correccion(acta, motivo)`: versión nueva de un acta firmada (v2, v3…) sin tocar la firmada.
 """
 
@@ -29,7 +30,7 @@ from movilidad.models import (
     SemestresToR,
     Superada,
 )
-from movilidad.notas import combinar, convertir, elegir_escala, es_ausencia, resultado_linea
+from movilidad.notas import NO_PRESENTADO, SUSPENSO, combinar, convertir, elegir_escala, es_ausencia, resultado_linea
 
 UMBRAL_PARECIDO = 0.75
 DECLARADA = {Superada.SI: True, Superada.NO: False, Superada.DESCONOCIDO: None}
@@ -167,7 +168,13 @@ def generar_borrador(movilidad, usuario=None) -> Acta:
             nombres = ", ".join(f"«{d.nombre}»" for d in faltan)
             if any(_cubre(t, grupo.semestre) for t in tors):
                 avisos.append(f"Sin nota en el ToR para {nombres} (S{grupo.semestre}): "
-                              f"{', '.join(u.nombre for u in grupo.materias_udc)} queda fuera del acta.")
+                              f"{', '.join(u.nombre for u in grupo.materias_udc)} va como «No presentado».")
+                for u in grupo.materias_udc:
+                    FilaActaD.objects.create(
+                        acta=acta, orden=orden, asignatura_udc=u, codigo=u.codigo_oficial or u.codigo,
+                        titulo=u.nombre, ects=0, nota=NO_PRESENTADO, detalle=f"{nombres}: no aparece en el ToR",
+                    )
+                    orden += 1
             else:
                 avisos.append(f"Pendiente del ToR del {grupo.semestre}.º semestre: {nombres}.")
             continue
@@ -176,7 +183,7 @@ def generar_borrador(movilidad, usuario=None) -> Acta:
             l = por_destino[d.pk]
             componentes.append((escala_de[l.pk], l.nota, l.ects or d.ects, DECLARADA[l.superada]))
         r = combinar(componentes)
-        if not r.nota:
+        if not r.nota or r.nota == SUSPENSO:
             avisos.append(f"{', '.join(u.nombre for u in grupo.materias_udc)}: {r.detalle}.")
         for u in grupo.materias_udc:
             FilaActaD.objects.create(
