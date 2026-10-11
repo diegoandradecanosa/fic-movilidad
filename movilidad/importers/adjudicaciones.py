@@ -210,6 +210,8 @@ def _leer_filas(ruta: Path):
             continue
         vacias = 0
         f = {k: (fila[i] if i < len(fila) else None) for k, i in mapa.items()}
+        if _norm(f["nombre"]) == "nome":  # cabecera repetida al empezar otra sección del listado
+            continue
         for clave, alternativa in ALTERNATIVAS.items():
             if clave not in mapa:
                 f[clave] = f.get(alternativa)
@@ -226,6 +228,7 @@ def importar_adjudicaciones(ruta, listado: str = Listado.DEFINITIVA) -> Informe:
     informe = Informe()
     vistas: dict[int, set[int]] = {}  # convocatoria_id -> ids de solicitudes presentes en el fichero
     adjudicadas: dict[tuple[int, int], list[Solicitud]] = {}
+    leidas: dict[tuple[int, int, int], str] = {}  # (convocatoria, estudiante, orden) -> estado en el fichero
 
     for f in _leer_filas(ruta):
         informe.filas += 1
@@ -280,6 +283,16 @@ def importar_adjudicaciones(ruta, listado: str = Listado.DEFINITIVA) -> Informe:
             "listado": listado,
         }
         orden = _entero(f["orden"]) or 0
+        clave = (convocatoria.id, estudiante.id, orden)
+        if clave in leidas:
+            # El listado repite filas entre secciones (adjudicadas / lista de espera / rechazadas).
+            if leidas[clave] != _texto(f["estado"]):
+                informe.avisos.append(
+                    f"{estudiante}: la preferencia {orden} aparece dos veces con estados distintos "
+                    f"({leidas[clave]!r} y {_texto(f['estado'])!r}); se queda el primero. Revísalo"
+                )
+            continue
+        leidas[clave] = _texto(f["estado"])
         solicitud = Solicitud.objects.filter(
             convocatoria=convocatoria, estudiante=estudiante, orden_preferencia=orden
         ).first()

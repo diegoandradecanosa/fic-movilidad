@@ -191,6 +191,17 @@ def test_cabeceras_en_la_fila_del_titulo_y_plazo_combinado(tmp_path):
 
 
 @pytest.mark.django_db
+def test_secciones_con_cabecera_repetida_y_filas_duplicadas(tmp_path):
+    rechazada = list(FILAS_BASE[0])
+    rechazada[CABECERA.index("Estado de solicitude - interno")] = "Rexeitada"
+    filas = FILAS_BASE[:2] + [[], ["2. ALUMNADO EN LISTAXE DE AGARDA"], CABECERA, FILAS_BASE[1], rechazada]
+    informe = importar_adjudicaciones(excel(tmp_path, filas))
+    assert Solicitud.objects.count() == 2
+    assert Movilidad.objects.count() == 1
+    assert len([a for a in informe.avisos if "dos veces" in a]) == 1
+
+
+@pytest.mark.django_db
 def test_formato_no_reconocido(tmp_path):
     ruta = excel(tmp_path, [["x"]], cabecera=["NOME", "Otra cosa"])
     with pytest.raises(FormatoNoReconocido):
