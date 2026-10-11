@@ -223,3 +223,55 @@ def test_login(client, usuarios):
     assert client.get("/cuentas/login/").status_code == 200
     r = client.post("/cuentas/login/", {"username": "admin1", "password": "x"})
     assert r.status_code == 302 and r.url == "/"
+
+
+# --- acción «Cambiar estado» del admin ------------------------------------------------------------
+
+def _post_estado(client, movilidades, **datos):
+    return client.post("/admin/movilidad/movilidad/", {
+        "action": "cambiar_estado", "_selected_action": [x.pk for x in movilidades], **datos})
+
+
+def test_cambiar_estado_desde_el_admin(admin_client, mov):
+    r = _post_estado(admin_client, [mov])
+    assert r.status_code == 200 and "LA firmado" in r.content.decode()  # página intermedia con lo permitido
+    r = _post_estado(admin_client, [mov], estado="LA_FIRMADO", nota="LA en papel recibido")
+    assert r.status_code == 302
+    mov.refresh_from_db()
+    assert mov.estado == EstadoMovilidad.LA_FIRMADO
+    evento = mov.eventos.first()
+    assert (evento.estado_anterior, evento.estado_nuevo, evento.nota) == ("LA_PREPARACION", "LA_FIRMADO", "LA en papel recibido")
+    assert evento.usuario.username == "admin"
+
+
+def test_cambiar_estado_no_permitido_sin_forzar(admin_client, mov):
+    r = _post_estado(admin_client, [mov], estado="FINALIZADA", nota="")
+    assert r.status_code == 200 and "Transición no permitida" in r.content.decode()
+    mov.refresh_from_db()
+    assert mov.estado == EstadoMovilidad.LA_PREPARACION
+
+
+def test_forzar_exige_motivo_y_queda_marcado(admin_client, mov):
+    r = _post_estado(admin_client, [mov], estado="FINALIZADA", forzar="on", nota="")
+    assert "hay que indicar el motivo" in r.content.decode()
+    _post_estado(admin_client, [mov], estado="FINALIZADA", forzar="on", nota="Caso de 2025/26 ya terminado")
+    mov.refresh_from_db()
+    assert mov.estado == EstadoMovilidad.FINALIZADA
+    assert mov.eventos.first().nota == "Caso de 2025/26 ya terminado [forzado]"
+
+
+def test_varias_movilidades_a_la_vez(admin_client, mov):
+    otra = otra_movilidad("Outra, Persoa", estado=EstadoMovilidad.ADJUDICADA)
+    mov.estado = EstadoMovilidad.ADJUDICADA
+    mov.save()
+    _post_estado(admin_client, [mov, otra], estado="ACEPTADA", nota="Aceptación ante la ORI")
+    assert set(Movilidad.objects.values_list("estado", flat=True)) == {EstadoMovilidad.ACEPTADA}
+
+
+def test_administracion_no_cambia_estados(client, usuarios, mov):
+    usuarios["admin1"].is_staff = True
+    usuarios["admin1"].save()
+    client.force_login(usuarios["admin1"])
+    _post_estado(client, [mov], estado="LA_FIRMADO", nota="x")
+    mov.refresh_from_db()
+    assert mov.estado == EstadoMovilidad.LA_PREPARACION

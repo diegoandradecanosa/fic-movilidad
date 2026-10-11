@@ -102,6 +102,28 @@ class ActaInline(admin.TabularInline):
         return False
 
 
+class CambioEstadoForm(forms.Form):
+    estado = forms.ChoiceField(label="Nuevo estado")
+    nota = forms.CharField(label="Nota / motivo", required=False, widget=forms.Textarea(attrs={"rows": 2}))
+    forzar = forms.BooleanField(
+        label="Forzar (saltar transiciones; p. ej. cargar casos de cursos anteriores)", required=False)
+
+    def __init__(self, *args, permitidos=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.permitidos = set(permitidos)
+        self.fields["estado"].choices = m.EstadoMovilidad.choices
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get("forzar"):
+            if not datos.get("nota", "").strip():
+                self.add_error("nota", "Al forzar un cambio de estado hay que indicar el motivo.")
+        elif datos.get("estado") and datos["estado"] not in self.permitidos:
+            self.add_error("estado", "Transición no permitida desde el estado actual (marca «Forzar» si es un caso "
+                                     "especial).")
+        return datos
+
+
 @admin.register(m.Movilidad)
 class MovilidadAdmin(admin.ModelAdmin):
     list_display = ["estudiante", "institucion", "programa", "convocatoria", "semestre_inicio", "duracion_semestres", "estado"]
@@ -109,7 +131,28 @@ class MovilidadAdmin(admin.ModelAdmin):
     search_fields = ["estudiante__nombre_completo", "institucion__nombre"]
     readonly_fields = ["estado", "creada", "actualizada", "solicitud", "acuerdo_academico"]
     inlines = [AnotacionInline, VersionLAInline, ToRInline, ActaInline, PlazoInline, ComunicacionInline, EventoInline]
-    actions = ["generar_acta"]
+    actions = ["cambiar_estado", "generar_acta"]
+
+    @admin.action(description="Cambiar estado (queda en el historial)", permissions=["change"])
+    def cambiar_estado(self, request, queryset):
+        movilidades = list(queryset.select_related("estudiante"))
+        permitidos = set.intersection(*(set(m.TRANSICIONES[m.EstadoMovilidad(x.estado)]) for x in movilidades))
+        form = CambioEstadoForm(request.POST if "estado" in request.POST else None, permitidos=permitidos)
+        if form.is_valid():
+            nuevo, forzar = form.cleaned_data["estado"], form.cleaned_data["forzar"]
+            nota = form.cleaned_data["nota"].strip() + (" [forzado]" if forzar else "")
+            for movilidad in movilidades:
+                try:
+                    movilidad.cambiar_estado(nuevo, usuario=request.user, nota=nota.strip(), forzar=forzar)
+                except m.TransicionNoPermitida as e:
+                    self.message_user(request, f"{movilidad}: {e}", messages.ERROR)
+            self.message_user(request, f"Estado actualizado a «{m.EstadoMovilidad(nuevo).label}».")
+            return None
+        return TemplateResponse(request, "admin/movilidad/movilidad/cambiar_estado.html", {
+            **self.admin_site.each_context(request), "opts": self.model._meta, "title": "Cambiar estado",
+            "movilidades": movilidades, "form": form,
+            "permitidos": [m.EstadoMovilidad(e).label for e in m.EstadoMovilidad if e in permitidos],
+        })
 
     @admin.action(description="Generar (o regenerar) el borrador del acta con los ToR aceptados")
     def generar_acta(self, request, queryset):
