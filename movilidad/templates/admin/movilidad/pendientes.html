@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:movilidad_plazo_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; Mis pendientes
+</div>
+{% endblock %}
+
+{% block content %}
+<p>Plazos y tareas pendientes asignados a ti o sin asignar, por fecha límite (hoy: {{ hoy|date:"d/m/Y" }}).
+Las alertas avisan a 7 y a 2 días.</p>
+{% if filas %}
+<table>
+  <thead><tr><th>Fecha límite</th><th>Alerta</th><th>Movilidad</th><th>Plazo / tarea</th><th>Nota</th><th></th></tr></thead>
+  <tbody>
+  {% for f in filas %}{% with p=f.plazo %}
+    <tr>
+      <td>{{ p.fecha_limite|date:"d/m/Y"|default:"—" }}</td>
+      <td>{{ f.alerta }}</td>
+      <td><a href="{% url 'admin:movilidad_movilidad_change' p.movilidad.pk %}">{{ p.movilidad.estudiante }} · {{ p.movilidad.institucion.nombre }}</a></td>
+      <td><a href="{% url 'admin:movilidad_plazo_change' p.pk %}">{{ p.descripcion|default:p.get_tipo_display }}</a>{% if p.regla %} ({{ p.regla }}){% endif %}</td>
+      <td>{{ p.nota|linebreaksbr }}</td>
+      <td>
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="plazo" value="{{ p.pk }}">
+          <button type="submit" name="accion" value="cumplido">Cumplido</button>
+          <button type="submit" name="accion" value="descartar">Descartar</button>
+        </form>
+      </td>
+    </tr>
+  {% endwith %}{% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No tienes nada pendiente.</p>
+{% endif %}
+{% endblock %}

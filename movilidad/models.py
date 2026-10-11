@@ -221,6 +221,9 @@ class Movilidad(models.Model):
     semestre_inicio = models.PositiveSmallIntegerField(null=True, blank=True)
     duracion_semestres = models.PositiveSmallIntegerField(null=True, blank=True)
     condiciones = models.TextField(blank=True)
+    fecha_llegada_prevista = models.DateField(
+        null=True, blank=True, help_text="Llegada prevista: el Before debe estar firmado antes (RN-06)"
+    )
     fecha_llegada = models.DateField(null=True, blank=True, help_text="Fecha del certificado de llegada")
     fecha_fin = models.DateField(null=True, blank=True, help_text="Fecha real de fin de estancia")
     fecha_inicio_s2 = models.DateField(
@@ -398,6 +401,10 @@ AVANCE_AL_FIRMAR = {
 }
 
 
+# Versiones que el coordinador envía a Administración para el cambio de matrícula (caso del alumno B).
+TIPOS_ENVIO_ADMINISTRACION = {TipoVersionLA.DURING_S1, TipoVersionLA.DURING_S2, TipoVersionLA.AMPLIACION}
+
+
 class VersionLA(models.Model):
     """Una versión del acuerdo académico (RF-08). El LA vigente se deriva de las firmadas (RF-09)."""
 
@@ -459,6 +466,8 @@ class VersionLA(models.Model):
         if guardada.estado == EstadoVersionLA.BORRADOR:
             return
         editables = {"estado", "motivo_invalidacion"} if guardada.estado == EstadoVersionLA.FIRMADA else set()
+        if not guardada.pdf:
+            editables.add("pdf")  # se puede adjuntar el PDF que faltaba, nunca sustituirlo
         cambiados = [
             f.name for f in self._meta.concrete_fields
             if f.name not in editables and getattr(self, f.attname) != getattr(guardada, f.attname)
@@ -480,6 +489,10 @@ class VersionLA(models.Model):
         origen, destino = AVANCE_AL_FIRMAR.get(self.tipo, (None, None))
         if origen and self.movilidad.estado == origen:
             self.movilidad.cambiar_estado(destino, usuario=usuario, nota=f"{self} firmada")
+        if self.tipo in TIPOS_ENVIO_ADMINISTRACION and settings.ENVIO_AUTOMATICO_LA:
+            from movilidad.envios import enviar_la_a_administracion
+
+            transaction.on_commit(lambda: enviar_la_a_administracion(self, usuario=usuario))
 
 
 class AccionFila(models.TextChoices):
@@ -536,3 +549,111 @@ def _materias_de_fila_firmada(sender, instance, action, reverse, pk_set, **kwarg
         filas = getattr(instance, instance.campo_filas).all()
     if filas.exclude(version__estado=EstadoVersionLA.BORRADOR).exists():
         raise ModificacionNoPermitida("La asignatura está en un LA firmado")
+
+
+# --- Bloque 3: plazos, tareas y comunicaciones ---------------------------------------------------
+
+
+class TipoPlazo(models.TextChoices):
+    FIRMAR_BEFORE = "FIRMAR_BEFORE", "Firmar el Before antes de la llegada"
+    VENTANA_MOD_S1 = "VENTANA_MOD_S1", "Plazo de modificación del 1.er semestre"
+    VENTANA_MOD_S2 = "VENTANA_MOD_S2", "Plazo de modificación del 2.º semestre"
+    VENTANA_AMPLIACION = "VENTANA_AMPLIACION", "Plazo para pedir la ampliación"
+    PREFERENCIA_AMPLIACION = "PREFERENCIA_AMPLIACION", "Ampliación con preferencia de financiación (ORI, 10/11)"
+    VENTANA_REDUCCION = "VENTANA_REDUCCION", "Plazo para pedir la reducción"
+    REVISAR_LA = "REVISAR_LA", "Revisar y firmar la versión del LA"
+    ENVIAR_LA_ADMINISTRACION = "ENVIAR_LA_ADMINISTRACION", "Enviar el LA a Administración"
+    OTRO = "OTRO", "Otro"
+
+
+# Las ventanas caducan solas (no son trabajo del coordinador); el resto son tareas que vencen.
+VENTANAS = {
+    TipoPlazo.VENTANA_MOD_S1, TipoPlazo.VENTANA_MOD_S2, TipoPlazo.VENTANA_AMPLIACION,
+    TipoPlazo.PREFERENCIA_AMPLIACION, TipoPlazo.VENTANA_REDUCCION,
+}
+
+
+class EstadoPlazo(models.TextChoices):
+    PENDIENTE = "PENDIENTE", "Pendiente"
+    CUMPLIDO = "CUMPLIDO", "Cumplido"
+    DESCARTADO = "DESCARTADO", "Descartado"
+
+
+class OrigenPlazo(models.TextChoices):
+    REGLA = "REGLA", "Regla (automático)"
+    MANUAL = "MANUAL", "Manual"
+
+
+class Plazo(models.Model):
+    """Plazo o tarea de una movilidad (RF-12, RF-13). Los de origen REGLA los mantiene plazos.py."""
+
+    movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="plazos")
+    tipo = models.CharField(max_length=30, choices=TipoPlazo.choices, default=TipoPlazo.OTRO)
+    descripcion = models.CharField(max_length=300, blank=True)
+    fecha_limite = models.DateField(null=True, blank=True)
+    responsable = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        help_text="Vacío = coordinador",
+    )
+    estado = models.CharField(max_length=12, choices=EstadoPlazo.choices, default=EstadoPlazo.PENDIENTE)
+    origen = models.CharField(max_length=10, choices=OrigenPlazo.choices, default=OrigenPlazo.MANUAL)
+    regla = models.CharField(max_length=10, blank=True, help_text="p. ej. RN-05")
+    version_la = models.ForeignKey(VersionLA, null=True, blank=True, on_delete=models.CASCADE, related_name="plazos")
+    cumplido_en = models.DateTimeField(null=True, blank=True)
+    nota = models.TextField(blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "plazo / tarea"
+        verbose_name_plural = "plazos y tareas"
+        ordering = [models.F("fecha_limite").asc(nulls_last=True), "id"]
+
+    def __str__(self):
+        fecha = f" · {self.fecha_limite:%d/%m/%Y}" if self.fecha_limite else ""
+        return f"{self.descripcion or self.get_tipo_display()}{fecha}"
+
+    @property
+    def es_ventana(self) -> bool:
+        return self.tipo in VENTANAS
+
+    def cerrar(self, estado=EstadoPlazo.CUMPLIDO, nota=""):
+        from django.utils import timezone
+
+        self.estado = estado
+        self.cumplido_en = timezone.now()
+        if nota:
+            self.nota = f"{self.nota}\n{nota}".strip()
+        self.save()
+
+
+class CanalComunicacion(models.TextChoices):
+    CORREO = "CORREO", "Correo"
+    TEAMS = "TEAMS", "Teams"
+    MOVEON = "MOVEON", "Aviso de MoveON"
+
+
+class Comunicacion(models.Model):
+    """Registro de un mensaje de la movilidad. Por ahora, los correos que envía la aplicación."""
+
+    movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="comunicaciones")
+    version_la = models.ForeignKey(VersionLA, null=True, blank=True, on_delete=models.SET_NULL)
+    canal = models.CharField(max_length=10, choices=CanalComunicacion.choices, default=CanalComunicacion.CORREO)
+    saliente = models.BooleanField(default=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+    remitente = models.CharField(max_length=254, blank=True)
+    para = models.TextField(blank=True)
+    cc = models.TextField(blank=True)
+    asunto = models.CharField(max_length=300)
+    cuerpo = models.TextField(blank=True)
+    adjuntos = models.TextField(blank=True, help_text="Nombres de los ficheros adjuntos")
+    enviada = models.BooleanField(default=False)
+    error = models.TextField(blank=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        verbose_name = "comunicación"
+        verbose_name_plural = "comunicaciones"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"{self.fecha:%d/%m/%Y %H:%M} {self.asunto}"
