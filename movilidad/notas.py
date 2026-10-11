@@ -12,6 +12,8 @@ Port de lib_grades.py (skill acta-reconocimiento) sobre el modelo EscalaNotas, c
   debajo del aprobado: 5 × nota / nota mínima de aprobado (p. ej. 12 sobre aprobado 18 → 3,33).
   Las letras de suspenso ECTS (F, FX) valen 4 (criterio del coordinador). Si no se puede (otras
   letras, escalas en las que menos es mejor), queda «Suspenso» para completar.
+- «2 por 1» con alguna parte suspensa: la UDC queda suspensa con min(4, media ponderada por ECTS
+  de las notas equivalentes de todas las partes) (criterio del coordinador, 10/2026).
 - «2 por 1»: media ponderada por ECTS. Con la misma escala se pondera la nota original y se
   convierte una vez; si no se puede (letras, escalas distintas), se convierte cada una y se pondera.
 """
@@ -173,6 +175,13 @@ def resultado_linea(escala, nota, superada_declarada=None) -> Resultado:
                      f"{nota} → {formatear(eq['equivalente_5_10'])} ({escala.id_escala})")
 
 
+def _valor(nota):
+    """'8,5' → 8.5; 'Suspenso (3,33)' → 3.33; 'Suspenso' / 'No presentado' / '' → None."""
+    texto = nota.removeprefix(SUSPENSO).strip(" ()")
+    numero = parse_numero(texto) if texto else None
+    return Decimal(str(numero)) if numero is not None else None
+
+
 def combinar(componentes) -> Resultado:
     """componentes: [(escala, nota_original, ects, superada_declarada)] de las materias de destino
     que reconocen una misma materia UDC. Si alguna no está superada, la UDC no se reconoce."""
@@ -181,8 +190,17 @@ def combinar(componentes) -> Resultado:
         return resultados[0]
     fallidas = [r for r in resultados if not r.superada]
     if fallidas:
+        valores = [_valor(r.nota) for r in resultados]
+        if any(r.nota.startswith(SUSPENSO) for r in fallidas) and None not in valores:
+            total = sum(Decimal(str(c[2])) for c in componentes)
+            media = sum(v * Decimal(str(c[2])) for v, c in zip(valores, componentes)) / total
+            nota = min(media, Decimal(4))
+            return Resultado(f"{SUSPENSO} ({formatear(nota)})", False,
+                             "; ".join(r.detalle for r in resultados)
+                             + f" → media ponderada {formatear(media)}; suspensa: mín(4, media) = {formatear(nota)}")
         nota = SUSPENSO if any(r.nota.startswith(SUSPENSO) for r in fallidas) else NO_PRESENTADO
-        return Resultado(nota, False, "; ".join(r.detalle for r in resultados) + " → no se reconoce")
+        return Resultado(nota, False, "; ".join(r.detalle for r in resultados)
+                         + " → no se reconoce; falta la nota de alguna parte: indícala")
     sin_nota = [r for r in resultados if not r.nota]
     if sin_nota:
         return Resultado("", True, "; ".join(r.detalle for r in resultados))

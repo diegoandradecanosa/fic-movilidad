@@ -106,7 +106,13 @@ def test_dos_por_uno_media_ponderada(escala_pt):
     assert combinar([(letras, "G", 2, None), (letras, "VG", 4, None)]).nota == "7,83"
     # si una no está superada, la UDC no se reconoce
     assert combinar([(escala_pt, "27", 3, None), (escala_pt, "ABS", 3, None)]).nota == NO_PRESENTADO
-    assert combinar([(escala_pt, "27", 3, None), (escala_pt, "12", 3, None)]).nota == SUSPENSO
+    # con una parte suspensa: suspensa con mín(4, media ponderada): (8,6·3 + 3,33·3)/6 = 5,97 → 4
+    r = combinar([(escala_pt, "27", 3, None), (escala_pt, "12", 3, None)])
+    assert (r.nota, r.superada) == ("Suspenso (4)", False)
+    # (5·1 + 0·5)/6 = 0,83 < 4: se queda la media
+    assert combinar([(escala_pt, "18", 1, None), (escala_pt, "0", 5, None)]).nota == "Suspenso (0,83)"
+    # suspenso sin número (otra letra): sin nota, para completar
+    assert combinar([(escala_pt, "27", 3, None), (escala_pt, "U", 3, None)]).nota == SUSPENSO
 
 
 def test_importar_equivalencias(tmp_path):
