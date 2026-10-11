@@ -294,9 +294,9 @@ class VersionLAAdmin(admin.ModelAdmin):
     list_filter = ["estado", "tipo", "formato", "movilidad__convocatoria"]
     search_fields = ["movilidad__estudiante__nombre_completo", "movilidad__institucion__nombre"]
     autocomplete_fields = ["movilidad"]
-    readonly_fields = ["avisos", "creada"]
+    readonly_fields = ["avisos", "extraido_con_ia", "creada"]
     inlines = [FilaInline]
-    actions = ["firmar", "enviar_administracion"]
+    actions = ["extraer_con_ia", "firmar", "enviar_administracion"]
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None or obj.editable:
@@ -353,6 +353,19 @@ class VersionLAAdmin(admin.ModelAdmin):
             settings.ENVIO_AUTOMATICO_LA and obj.estado == m.EstadoVersionLA.FIRMADA
             and obj.plazos.filter(tipo=m.TipoPlazo.ENVIAR_LA_ADMINISTRACION, estado=m.EstadoPlazo.PENDIENTE).exists()
         )
+
+    @admin.action(description="Proponer las filas desde el PDF con IA (queda en borrador para revisar)")
+    def extraer_con_ia(self, request, queryset):
+        for v in queryset:
+            try:
+                r = extraccion_ia.extraer_la(v)
+            except (extraccion_ia.IANoDisponible, ValueError) as e:
+                self.message_user(request, f"{v}: {e}", messages.ERROR)
+                continue
+            self.message_user(request, f"{v}: {r['filas']} filas propuestas. Revísalas (y sus observaciones) "
+                                       "antes de firmar.")
+            for aviso in r["avisos"]:
+                messages.warning(request, f"{v}: {aviso}")
 
     @admin.action(description="Marcar como firmadas (las versiones pasan a ser inmutables)")
     def firmar(self, request, queryset):
