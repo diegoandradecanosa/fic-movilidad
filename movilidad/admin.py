@@ -15,7 +15,10 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from movilidad import models as m
-from movilidad.envios import enviar_la_a_administracion
+from movilidad.acta import crear_correccion, generar_borrador, proponer_emparejamiento
+from movilidad.acta_docx import RecursosNoDisponibles, generar_documentos
+from movilidad.envios import EnvioImposible, enviar_atm, enviar_la_a_administracion
+from movilidad import extraccion_ia
 from movilidad.la_vigente import la_vigente
 from movilidad.plazos import nivel_alerta, pendientes
 from movilidad.validaciones_la import validar
@@ -63,22 +66,59 @@ class ComunicacionInline(admin.TabularInline):
         return False
 
 
+class ToRInline(admin.TabularInline):
+    model = m.ToR
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ["fecha_recepcion", "remitente", "semestres", "parcial", "estado", "pdf"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class ActaInline(admin.TabularInline):
+    model = m.Acta
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ["numero", "estado", "corrige", "fecha_firma", "fecha_envio", "docx", "pdf_firmado"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(m.Movilidad)
 class MovilidadAdmin(admin.ModelAdmin):
     list_display = ["estudiante", "institucion", "programa", "convocatoria", "semestre_inicio", "duracion_semestres", "estado"]
     list_filter = ["convocatoria", "estado", "programa", "institucion__pais"]
     search_fields = ["estudiante__nombre_completo", "institucion__nombre"]
     readonly_fields = ["estado", "creada", "actualizada", "solicitud", "acuerdo_academico"]
-    inlines = [VersionLAInline, PlazoInline, ComunicacionInline, EventoInline]
+    inlines = [VersionLAInline, ToRInline, ActaInline, PlazoInline, ComunicacionInline, EventoInline]
+    actions = ["generar_acta"]
+
+    @admin.action(description="Generar (o regenerar) el borrador del acta con los ToR aceptados")
+    def generar_acta(self, request, queryset):
+        for movilidad in queryset:
+            try:
+                acta = generar_borrador(movilidad, usuario=request.user)
+            except ValueError as e:
+                self.message_user(request, f"{movilidad}: {e}", messages.ERROR)
+                continue
+            self.message_user(request, f"{movilidad}: {acta} con {len(acta.avisos)} aviso(s).")
 
     @admin.display(description="Acuerdo académico")
     def acuerdo_academico(self, obj):
         if not obj.pk:
             return "—"
         return format_html(
-            '<a href="{}">Ver LA vigente</a> · <a href="{}?movilidad={}">Añadir versión del LA</a>',
+            '<a href="{}">Ver LA vigente</a> · <a href="{}?movilidad={}">Añadir versión del LA</a> · '
+            '<a href="{}?movilidad={}">Registrar ToR</a>',
             reverse("admin:movilidad_movilidad_la_vigente", args=[obj.pk]),
             reverse("admin:movilidad_versionla_add"), obj.pk,
+            reverse("admin:movilidad_tor_add"), obj.pk,
         )
 
     def get_urls(self):
@@ -358,6 +398,221 @@ class ComunicacionAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(m.EscalaNotas)
+class EscalaNotasAdmin(admin.ModelAdmin):
+    """Tabla oficial de equivalencias (se importa del JSON; solo lectura)."""
+
+    list_display = ["pais", "pais_iso", "id_escala", "num_calificaciones", "nota_minima_aprobatoria", "nota_maxima"]
+    list_filter = ["pais_iso"]
+    search_fields = ["pais", "id_escala"]
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in m.EscalaNotas._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+
+def _html_avisos(avisos):
+    if not avisos:
+        return "Sin avisos."
+    return format_html("<ul>{}</ul>", format_html_join("", "<li>{}</li>", ((a,) for a in avisos)))
+
+
+class LineaToRInline(admin.TabularInline):
+    model = m.LineaToR
+    extra = 0
+    fields = ["orden", "codigo", "titulo", "ects", "nota", "superada", "asignatura_destino", "escala"]
+    autocomplete_fields = ["asignatura_destino", "escala"]
+
+    def _editable(self, obj):
+        return obj is None or obj.estado == m.EstadoToR.BORRADOR
+
+    def has_add_permission(self, request, obj=None):
+        return self._editable(obj) and super().has_add_permission(request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        return self._editable(obj) and super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        return self._editable(obj) and super().has_delete_permission(request, obj)
+
+
+@admin.register(m.ToR)
+class ToRAdmin(admin.ModelAdmin):
+    """RF-14/RF-15: registro del ToR y revisión de sus notas (lo extraído por IA es borrador)."""
+
+    list_display = ["movilidad", "fecha_recepcion", "remitente", "semestres", "parcial", "estado", "extraido_con_ia"]
+    list_filter = ["estado", "semestres", "remitente", "parcial", "movilidad__convocatoria"]
+    search_fields = ["movilidad__estudiante__nombre_completo", "movilidad__institucion__nombre"]
+    autocomplete_fields = ["movilidad", "escala"]
+    readonly_fields = ["estado", "extraido_con_ia", "creado"]
+    inlines = [LineaToRInline]
+    actions = ["extraer_con_ia", "emparejar", "aceptar", "devolver_a_borrador", "generar_acta"]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.estado == m.EstadoToR.ACEPTADO:
+            return [f.name for f in m.ToR._meta.fields if f.name != "id"]
+        return self.readonly_fields
+
+    @admin.action(description="Extraer las notas del PDF con IA (queda en borrador para revisar)")
+    def extraer_con_ia(self, request, queryset):
+        for tor in queryset:
+            try:
+                n = extraccion_ia.extraer_tor(tor)
+                sin_pareja = proponer_emparejamiento(tor)
+            except (extraccion_ia.IANoDisponible, ValueError) as e:
+                self.message_user(request, f"{tor}: {e}", messages.ERROR)
+                continue
+            self.message_user(request, f"{tor}: {n} materias extraídas; {len(sin_pareja)} sin emparejar con el LA. "
+                                       "Revísalas y acepta el ToR.")
+
+    @admin.action(description="Proponer emparejamiento con el LA vigente")
+    def emparejar(self, request, queryset):
+        for tor in queryset.filter(estado=m.EstadoToR.BORRADOR):
+            sin_pareja = proponer_emparejamiento(tor)
+            nombres = ", ".join(l.titulo for l in sin_pareja) or "ninguna"
+            self.message_user(request, f"{tor}: sin pareja en el LA: {nombres}.")
+
+    @admin.action(description="Aceptar (notas y emparejamiento revisados)")
+    def aceptar(self, request, queryset):
+        for tor in queryset.filter(estado=m.EstadoToR.BORRADOR):
+            tor.aceptar(usuario=request.user)
+        self.message_user(request, "ToR aceptado(s): ya se pueden usar en el acta.")
+
+    @admin.action(description="Devolver a borrador para corregirlo")
+    def devolver_a_borrador(self, request, queryset):
+        for tor in queryset.filter(estado=m.EstadoToR.ACEPTADO):
+            if tor.usado_en_acta_firmada():
+                self.message_user(request, f"{tor}: está en un acta firmada; corrige el acta con una versión nueva.",
+                                  messages.ERROR)
+                continue
+            tor.estado = m.EstadoToR.BORRADOR
+            tor.save(update_fields=["estado"])
+
+    @admin.action(description="Generar el borrador del acta de su movilidad")
+    def generar_acta(self, request, queryset):
+        for movilidad in {t.movilidad for t in queryset}:
+            try:
+                acta = generar_borrador(movilidad, usuario=request.user)
+            except ValueError as e:
+                self.message_user(request, f"{movilidad}: {e}", messages.ERROR)
+                continue
+            self.message_user(request, format_html('<a href="{}">{}</a> generada con {} aviso(s).',
+                              reverse("admin:movilidad_acta_change", args=[acta.pk]), acta, len(acta.avisos)))
+
+
+class FilaActaInline(admin.TabularInline):
+    """Las tablas C y D solo se editan mientras el acta es un borrador."""
+
+    extra = 0
+
+    def _editable(self, obj):
+        return obj is None or obj.editable
+
+    def has_add_permission(self, request, obj=None):
+        return self._editable(obj) and super().has_add_permission(request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        return self._editable(obj) and super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        return self._editable(obj) and super().has_delete_permission(request, obj)
+
+
+class FilaCInline(FilaActaInline):
+    model = m.FilaActaC
+    fields = ["orden", "codigo", "titulo", "superada", "ects", "nota_original"]
+
+
+class FilaDInline(FilaActaInline):
+    model = m.FilaActaD
+    fields = ["orden", "codigo", "titulo", "ects", "nota", "detalle"]
+    readonly_fields = ["detalle"]
+
+
+class MotivoCorreccionForm(forms.Form):
+    motivo = forms.CharField(label="Motivo de la corrección", widget=forms.Textarea(attrs={"rows": 3}))
+
+
+@admin.register(m.Acta)
+class ActaAdmin(admin.ModelAdmin):
+    """RF-17…RF-20. Se crea desde la movilidad o el ToR («Generar el borrador del acta»)."""
+
+    list_display = ["movilidad", "numero", "estado", "corrige", "fecha_firma", "fecha_envio"]
+    list_filter = ["estado", "movilidad__convocatoria"]
+    search_fields = ["movilidad__estudiante__nombre_completo"]
+    fields = ["movilidad", "numero", "estado", "corrige", "motivo_correccion", "tors", "avisos_html", "docx", "pdf",
+              "pdf_firmado", "fecha_firma", "fecha_envio"]
+    inlines = [FilaCInline, FilaDInline]
+    actions = ["generar_docx", "marcar_firmada", "enviar", "corregir"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return (obj is None or obj.editable) and super().has_delete_permission(request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        fijos = ["movilidad", "numero", "estado", "corrige", "tors", "avisos_html", "docx", "pdf", "fecha_envio"]
+        if obj and not obj.editable:
+            return fijos + ["motivo_correccion", "pdf_firmado", "fecha_firma"]
+        return fijos
+
+    @admin.display(description="Avisos")
+    def avisos_html(self, obj):
+        return _html_avisos(obj.avisos if obj else [])
+
+    @admin.action(description="Generar el docx del borrador")
+    def generar_docx(self, request, queryset):
+        for acta in queryset.filter(estado=m.EstadoActa.BORRADOR):
+            try:
+                avisos = generar_documentos(acta)
+            except (RecursosNoDisponibles, ValueError) as e:
+                self.message_user(request, f"{acta}: {e}", messages.ERROR)
+                continue
+            self.message_user(request, f"{acta}: documento generado. " + " ".join(avisos))
+
+    @admin.action(description="Marcar como firmada (con el PDF firmado ya subido)")
+    def marcar_firmada(self, request, queryset):
+        for acta in queryset.filter(estado=m.EstadoActa.BORRADOR):
+            if not acta.pdf_firmado or not acta.fecha_firma:
+                self.message_user(request, f"{acta}: sube el PDF firmado e indica la fecha de firma.", messages.ERROR)
+                continue
+            acta.firmar(acta.pdf_firmado, acta.fecha_firma, usuario=request.user)
+            self.message_user(request, f"{acta}: firmada.")
+
+    @admin.action(description="Enviar «ATM de …» a Administración (copia a la ORI)")
+    def enviar(self, request, queryset):
+        for acta in queryset:
+            try:
+                c = enviar_atm(acta, usuario=request.user)
+            except EnvioImposible as e:
+                self.message_user(request, f"{acta}: {e}", messages.ERROR)
+                continue
+            nivel = messages.SUCCESS if c.enviada else messages.ERROR
+            self.message_user(request, f"{acta}: {'enviada' if c.enviada else 'no enviada'} a {c.para}. {c.error}", nivel)
+
+    @admin.action(description="Crear una corrección (nueva versión) del acta firmada")
+    def corregir(self, request, queryset):
+        if queryset.count() != 1:
+            self.message_user(request, "Selecciona una sola acta.", messages.ERROR)
+            return None
+        acta = queryset.get()
+        form = MotivoCorreccionForm(request.POST if "motivo" in request.POST else None)
+        if form.is_valid():
+            try:
+                nueva = crear_correccion(acta, form.cleaned_data["motivo"], usuario=request.user)
+            except ValueError as e:
+                self.message_user(request, str(e), messages.ERROR)
+                return None
+            return redirect(reverse("admin:movilidad_acta_change", args=[nueva.pk]))
+        return TemplateResponse(request, "admin/movilidad/acta/corregir.html", {
+            **self.admin_site.each_context(request), "opts": self.model._meta, "acta": acta, "form": form,
+            "title": f"Corregir {acta}",
+        })
 
 
 admin.site.register(m.Convocatoria)

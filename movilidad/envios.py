@@ -100,3 +100,79 @@ def enviar_la_a_administracion(version, usuario=None) -> Comunicacion | None:
     else:
         _tarea_pendiente(version, f"Falló el envío: {error}")
     return comunicacion
+
+
+# --- «ATM de [Nombre]»: acta firmada a Administración (RF-19) --------------------------------------
+
+
+class EnvioImposible(ValueError):
+    pass
+
+
+def adjuntos_atm(acta) -> list:
+    """(nombre, contenido) del acta firmada, los ToR usados y las versiones del LA vigente."""
+    from movilidad.la_vigente import la_vigente
+
+    ficheros = [acta.pdf_firmado]
+    ficheros += [t.pdf for t in acta.tors.all() if t.pdf]
+    ficheros += [v.pdf for v in la_vigente(acta.movilidad).versiones if v.pdf]
+    adjuntos = []
+    for f in ficheros:
+        with f.open("rb") as fh:
+            adjuntos.append((Path(f.name).name, fh.read()))
+    return adjuntos
+
+
+def componer_atm(acta):
+    alumno = nombre_natural(acta.movilidad.estudiante.nombre_completo)
+    asunto = f"{'RE: ' if acta.corrige_id else ''}ATM de {alumno}"
+    lineas = ["Buenos días:", ""]
+    if acta.corrige_id:
+        lineas += [f"Os envío el acta corregida (v{acta.numero}) de {alumno}, que sustituye a la v{acta.corrige.numero}.",
+                   f"Motivo de la corrección: {acta.motivo_correccion}", ""]
+    else:
+        lineas += [f"Os envío el acta de reconocimiento («After the Mobility») de {alumno} "
+                   f"({acta.movilidad.institucion.nombre}, {acta.movilidad.convocatoria.curso}), firmada, "
+                   "junto con el certificado de notas (ToR) y el acuerdo académico.", ""]
+    lineas += ["Un saludo,", "Coordinación de movilidad · Facultade de Informática"]
+    return asunto, "\n".join(lineas)
+
+
+def enviar_atm(acta, usuario=None) -> Comunicacion:
+    """Envía el acta firmada a Administración con copia a la ORI y al coordinador."""
+    from django.utils import timezone
+
+    from movilidad.models import EstadoActa, EstadoMovilidad
+    from movilidad.plazos import recalcular_plazos
+
+    if acta.estado != EstadoActa.FIRMADA:
+        raise EnvioImposible("Solo se envía un acta firmada (y no enviada ya).")
+    if not acta.pdf_firmado:
+        raise EnvioImposible("Falta el PDF firmado del acta.")
+    if not settings.CORREO_ADMINISTRACION:
+        raise EnvioImposible("No está configurado CORREO_ADMINISTRACION.")
+    asunto, cuerpo = componer_atm(acta)
+    adjuntos = adjuntos_atm(acta)
+    cc = [c for c in (settings.CORREO_ORI, settings.CORREO_COORDINADOR) if c]
+    mensaje = EmailMessage(asunto, cuerpo, settings.DEFAULT_FROM_EMAIL, [settings.CORREO_ADMINISTRACION], cc=cc)
+    for nombre, contenido in adjuntos:
+        mensaje.attach(nombre, contenido, "application/pdf")
+    enviada, error = True, ""
+    try:
+        mensaje.send()
+    except Exception as e:  # queda registrado; el acta sigue firmada y se puede reintentar
+        enviada, error = False, f"{type(e).__name__}: {e}"
+    if enviada and not settings.CORREO_ORI:
+        error = "Enviado sin copia a la ORI: no está configurado CORREO_ORI."
+    comunicacion = Comunicacion.objects.create(
+        movilidad=acta.movilidad, acta=acta, remitente=settings.DEFAULT_FROM_EMAIL,
+        para=settings.CORREO_ADMINISTRACION, cc=", ".join(cc), asunto=asunto, cuerpo=cuerpo,
+        adjuntos=", ".join(n for n, _ in adjuntos), enviada=enviada, error=error, usuario=usuario,
+    )
+    if enviada:
+        acta.estado, acta.fecha_envio = EstadoActa.ENVIADA, timezone.now()
+        acta.save()
+        if acta.movilidad.estado == EstadoMovilidad.ACTA_FIRMADA:
+            acta.movilidad.cambiar_estado(EstadoMovilidad.ENVIADA_ADMINISTRACION, usuario=usuario, nota=asunto)
+        recalcular_plazos(acta.movilidad)
+    return comunicacion

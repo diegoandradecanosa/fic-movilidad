@@ -563,6 +563,7 @@ class TipoPlazo(models.TextChoices):
     VENTANA_REDUCCION = "VENTANA_REDUCCION", "Plazo para pedir la reducción"
     REVISAR_LA = "REVISAR_LA", "Revisar y firmar la versión del LA"
     ENVIAR_LA_ADMINISTRACION = "ENVIAR_LA_ADMINISTRACION", "Enviar el LA a Administración"
+    ENVIAR_ACTA = "ENVIAR_ACTA", "Enviar el acta firmada (5 semanas desde el ToR)"
     OTRO = "OTRO", "Otro"
 
 
@@ -599,6 +600,7 @@ class Plazo(models.Model):
     origen = models.CharField(max_length=10, choices=OrigenPlazo.choices, default=OrigenPlazo.MANUAL)
     regla = models.CharField(max_length=10, blank=True, help_text="p. ej. RN-05")
     version_la = models.ForeignKey(VersionLA, null=True, blank=True, on_delete=models.CASCADE, related_name="plazos")
+    tor = models.ForeignKey("ToR", null=True, blank=True, on_delete=models.CASCADE, related_name="plazos")
     cumplido_en = models.DateTimeField(null=True, blank=True)
     nota = models.TextField(blank=True)
     creado = models.DateTimeField(auto_now_add=True)
@@ -637,6 +639,7 @@ class Comunicacion(models.Model):
 
     movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="comunicaciones")
     version_la = models.ForeignKey(VersionLA, null=True, blank=True, on_delete=models.SET_NULL)
+    acta = models.ForeignKey("Acta", null=True, blank=True, on_delete=models.SET_NULL, related_name="comunicaciones")
     canal = models.CharField(max_length=10, choices=CanalComunicacion.choices, default=CanalComunicacion.CORREO)
     saliente = models.BooleanField(default=True)
     fecha = models.DateTimeField(auto_now_add=True)
@@ -657,3 +660,259 @@ class Comunicacion(models.Model):
 
     def __str__(self):
         return f"{self.fecha:%d/%m/%Y %H:%M} {self.asunto}"
+
+
+# --- Bloque 4: ToR, conversión de notas y acta ATM ------------------------------------------------
+
+
+class EscalaNotas(models.Model):
+    """Una escala de calificación de un país con su equivalencia española (Resol. 18/09/2017).
+
+    Se importa del JSON oficial de equivalencias (comando importar_equivalencias)."""
+
+    pais = models.CharField(max_length=100, help_text="Nombre del país en el JSON oficial (ALEMANIA)")
+    pais_iso = models.CharField(max_length=2, blank=True, db_index=True)
+    id_escala = models.CharField(max_length=120)
+    tipo_nota_origen = models.CharField(max_length=30, blank=True)
+    num_calificaciones = models.PositiveIntegerField(default=0)
+    nota_minima_aprobatoria = models.CharField(max_length=20, blank=True)
+    nota_maxima = models.CharField(max_length=20, blank=True)
+    calificaciones = models.JSONField(help_text="{nota local: {equivalente_5_10, equivalente_1_4, equivalente_literal}}")
+
+    class Meta:
+        verbose_name = "escala de notas"
+        verbose_name_plural = "escalas de notas"
+        ordering = ["pais", "id_escala"]
+        constraints = [models.UniqueConstraint(fields=["pais", "id_escala"], name="escala_unica")]
+
+    def __str__(self):
+        return f"{self.pais} · {self.id_escala}"
+
+
+class RemitenteToR(models.TextChoices):
+    ORI = "ORI", "ORI"
+    DESTINO = "DESTINO", "Universidad de destino"
+    ALUMNO = "ALUMNO", "Alumno/a"
+
+
+class SemestresToR(models.TextChoices):
+    S1 = "S1", "1.er semestre"
+    S2 = "S2", "2.º semestre"
+    AMBOS = "AMBOS", "Curso completo"
+
+
+class EstadoToR(models.TextChoices):
+    BORRADOR = "BORRADOR", "Pendiente de revisar"
+    ACEPTADO = "ACEPTADO", "Revisado y aceptado"
+
+
+class ToR(models.Model):
+    """Transcript of Records recibido (RF-14). Sus líneas (a mano o extraídas por IA) son un
+    borrador hasta que el coordinador lo acepta; solo los aceptados se usan en el acta."""
+
+    movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="tors")
+    fecha_recepcion = models.DateField(help_text="Fecha de recepción (inicia el plazo de 5 semanas, RN-15)")
+    remitente = models.CharField(max_length=10, choices=RemitenteToR.choices, default=RemitenteToR.ORI)
+    semestres = models.CharField(max_length=5, choices=SemestresToR.choices, default=SemestresToR.S1)
+    parcial = models.BooleanField(default=False, help_text="Faltan notas o semestres")
+    pdf = models.FileField(upload_to="tor/%Y/", blank=True)
+    estado = models.CharField(max_length=10, choices=EstadoToR.choices, default=EstadoToR.BORRADOR)
+    nombre_en_documento = models.CharField(max_length=200, blank=True)
+    descripcion_escala = models.TextField(blank=True, help_text="Escala de calificación tal como la describe el ToR")
+    nota_minima = models.CharField(max_length=20, blank=True)
+    nota_maxima = models.CharField(max_length=20, blank=True)
+    escala = models.ForeignKey(
+        EscalaNotas, null=True, blank=True, on_delete=models.PROTECT,
+        help_text="Vacío = la elige la aplicación según las notas del ToR",
+    )
+    extraido_con_ia = models.BooleanField(default=False)
+    notas = models.TextField(blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "ToR (certificado de notas)"
+        verbose_name_plural = "ToR (certificados de notas)"
+        ordering = ["movilidad", "fecha_recepcion"]
+
+    def __str__(self):
+        return f"ToR {self.get_semestres_display()} · recibido {self.fecha_recepcion:%d/%m/%Y}"
+
+    def usado_en_acta_firmada(self) -> bool:
+        return self.pk is not None and self.actas.exclude(estado=EstadoActa.BORRADOR).exists()
+
+    @transaction.atomic
+    def aceptar(self, usuario=None):
+        self.estado = EstadoToR.ACEPTADO
+        self.save(update_fields=["estado"])
+
+
+class Superada(models.TextChoices):
+    SI = "SI", "Sí"
+    NO = "NO", "No"
+    DESCONOCIDO = "?", "Según la nota"
+
+
+class LineaToR(models.Model):
+    tor = models.ForeignKey(ToR, on_delete=models.CASCADE, related_name="lineas")
+    orden = models.PositiveSmallIntegerField(default=0)
+    codigo = models.CharField(max_length=50, blank=True)
+    titulo = models.CharField(max_length=255)
+    ects = models.DecimalField(max_digits=5, decimal_places=2)
+    nota = models.CharField(max_length=30, blank=True, help_text="Tal cual figura en el ToR (7,5 / A / ABS / NE)")
+    superada = models.CharField(max_length=2, choices=Superada.choices, default=Superada.DESCONOCIDO)
+    escala = models.ForeignKey(
+        EscalaNotas, null=True, blank=True, on_delete=models.PROTECT,
+        help_text="Solo si el ToR indica otra escala para esta materia",
+    )
+    asignatura_destino = models.ForeignKey(
+        AsignaturaDestino, null=True, blank=True, on_delete=models.PROTECT, related_name="lineas_tor",
+        help_text="Emparejamiento con la materia del LA",
+    )
+
+    class Meta:
+        verbose_name = "línea del ToR"
+        verbose_name_plural = "líneas del ToR"
+        ordering = ["tor", "orden", "id"]
+
+    def __str__(self):
+        return f"{self.titulo}: {self.nota or '—'}"
+
+    def _comprobar_editable(self):
+        tor = ToR.objects.filter(pk=self.tor_id).first()
+        if tor and tor.estado != EstadoToR.BORRADOR:
+            raise ModificacionNoPermitida("El ToR ya está aceptado: devuélvelo a borrador para corregirlo")
+
+    def save(self, *args, **kwargs):
+        self._comprobar_editable()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._comprobar_editable()
+        return super().delete(*args, **kwargs)
+
+
+class EstadoActa(models.TextChoices):
+    BORRADOR = "BORRADOR", "Borrador"
+    FIRMADA = "FIRMADA", "Firmada"
+    ENVIADA = "ENVIADA", "Enviada a Administración"
+
+
+class Acta(models.Model):
+    """Acta de reconocimiento 'After the Mobility' (RF-17…RF-20). Las firmadas no se modifican:
+    una corrección es un acta nueva que 'corrige' a la anterior (v2, v3…)."""
+
+    movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="actas")
+    numero = models.PositiveSmallIntegerField(blank=True)
+    estado = models.CharField(max_length=10, choices=EstadoActa.choices, default=EstadoActa.BORRADOR)
+    corrige = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="correcciones")
+    motivo_correccion = models.TextField(blank=True, help_text="Escala, materia omitida, error de nota…")
+    tors = models.ManyToManyField(ToR, related_name="actas", blank=True)
+    avisos = models.JSONField(default=list, blank=True)
+    docx = models.FileField(upload_to="actas/%Y/", blank=True)
+    pdf = models.FileField(upload_to="actas/%Y/", blank=True, help_text="PDF del borrador (si hay LibreOffice)")
+    pdf_firmado = models.FileField(upload_to="actas/%Y/", blank=True, help_text="Acta firmada con FNMT")
+    fecha_firma = models.DateField(null=True, blank=True)
+    fecha_envio = models.DateTimeField(null=True, blank=True)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "acta de reconocimiento"
+        verbose_name_plural = "actas de reconocimiento"
+        ordering = ["movilidad", "numero"]
+        constraints = [models.UniqueConstraint(fields=["movilidad", "numero"], name="acta_unica")]
+
+    def __str__(self):
+        return f"Acta v{self.numero} ({self.get_estado_display().lower()})"
+
+    @property
+    def editable(self):
+        return self.estado == EstadoActa.BORRADOR
+
+    def clean(self):
+        if self.corrige_id:
+            if self.corrige.movilidad_id != self.movilidad_id:
+                raise ValidationError({"corrige": "El acta corregida es de otra movilidad."})
+            if self.corrige.estado == EstadoActa.BORRADOR:
+                raise ValidationError({"corrige": "Un borrador se edita, no se corrige."})
+            if not self.motivo_correccion:
+                raise ValidationError({"motivo_correccion": "Indica el motivo de la corrección."})
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            guardada = Acta.objects.filter(pk=self.pk).first()
+            if guardada and guardada.estado != EstadoActa.BORRADOR:
+                editables = {"estado", "fecha_envio"} if guardada.estado == EstadoActa.FIRMADA else set()
+                cambiados = [
+                    f.name for f in self._meta.concrete_fields
+                    if f.name not in editables and getattr(self, f.attname) != getattr(guardada, f.attname)
+                ]
+                if cambiados or (guardada.estado == EstadoActa.FIRMADA and self.estado == EstadoActa.BORRADOR):
+                    raise ModificacionNoPermitida(f"{guardada}: firmada, no se modifica; crea una corrección")
+        if not self.numero:
+            ultimo = Acta.objects.filter(movilidad_id=self.movilidad_id).aggregate(m=models.Max("numero"))["m"]
+            self.numero = (ultimo or 0) + 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if not self.editable:
+            raise ModificacionNoPermitida(f"{self}: no se borra un acta firmada")
+        return super().delete(*args, **kwargs)
+
+    @transaction.atomic
+    def firmar(self, pdf_firmado, fecha_firma, usuario=None):
+        """RF-18: se sube el PDF firmado (FNMT, fuera de la aplicación) y el acta queda vigente."""
+        if not self.editable:
+            raise ModificacionNoPermitida(f"{self}: ya está firmada")
+        if not pdf_firmado:
+            raise ValidationError("Falta el PDF firmado.")
+        self.pdf_firmado, self.fecha_firma = pdf_firmado, fecha_firma
+        self.save()
+        self.estado = EstadoActa.FIRMADA
+        self.save()
+        if self.movilidad.estado == E.ACTA_BORRADOR:
+            self.movilidad.cambiar_estado(E.ACTA_FIRMADA, usuario=usuario, nota=f"{self} firmada")
+
+
+class FilaActaC(models.Model):
+    """Tabla C: materias cursadas en destino (todas, superadas o no)."""
+
+    acta = models.ForeignKey(Acta, on_delete=models.CASCADE, related_name="filas_c")
+    orden = models.PositiveSmallIntegerField(default=0)
+    codigo = models.CharField(max_length=50, blank=True)
+    titulo = models.CharField(max_length=255)
+    superada = models.BooleanField(default=True)
+    ects = models.DecimalField(max_digits=5, decimal_places=2)
+    nota_original = models.CharField(max_length=30, blank=True)
+
+    class Meta:
+        verbose_name = "fila de la tabla C"
+        verbose_name_plural = "tabla C (materias de destino)"
+        ordering = ["acta", "orden"]
+
+
+class FilaActaD(models.Model):
+    """Tabla D: materias reconocidas en la UDC con la nota ya convertida."""
+
+    acta = models.ForeignKey(Acta, on_delete=models.CASCADE, related_name="filas_d")
+    orden = models.PositiveSmallIntegerField(default=0)
+    asignatura_udc = models.ForeignKey(AsignaturaUDC, null=True, blank=True, on_delete=models.PROTECT)
+    codigo = models.CharField(max_length=20, blank=True)
+    titulo = models.CharField(max_length=255)
+    ects = models.DecimalField(max_digits=5, decimal_places=2, help_text="ECTS reconocidos (0 si no superada)")
+    nota = models.CharField(max_length=30, help_text="Nota española (8,5), «Suspenso» o «No presentado»")
+    detalle = models.TextField(blank=True, help_text="Cómo se calculó")
+
+    class Meta:
+        verbose_name = "fila de la tabla D"
+        verbose_name_plural = "tabla D (materias UDC)"
+        ordering = ["acta", "orden"]
+
+
+def _fila_acta_editable(sender, instance, **kwargs):
+    if not Acta.objects.get(pk=instance.acta_id).editable:
+        raise ModificacionNoPermitida("El acta está firmada: sus tablas no se modifican")
+
+
+for _modelo in (FilaActaC, FilaActaD):
+    models.signals.pre_save.connect(_fila_acta_editable, sender=_modelo)
+    models.signals.pre_delete.connect(_fila_acta_editable, sender=_modelo)
