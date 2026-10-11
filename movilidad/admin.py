@@ -5,15 +5,19 @@ con anotaciones (RF-30).
 """
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from movilidad import models as m
+from movilidad.envios import enviar_la_a_administracion
 from movilidad.la_vigente import la_vigente
+from movilidad.plazos import nivel_alerta, pendientes
 from movilidad.validaciones_la import validar
 
 
@@ -39,13 +43,33 @@ class VersionLAInline(admin.TabularInline):
         return False
 
 
+class PlazoInline(admin.TabularInline):
+    model = m.Plazo
+    extra = 0
+    fields = ["tipo", "descripcion", "fecha_limite", "responsable", "estado", "origen", "nota"]
+    readonly_fields = ["origen"]
+    show_change_link = True
+
+
+class ComunicacionInline(admin.TabularInline):
+    model = m.Comunicacion
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ["fecha", "canal", "asunto", "para", "cc", "enviada", "error"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(m.Movilidad)
 class MovilidadAdmin(admin.ModelAdmin):
     list_display = ["estudiante", "institucion", "programa", "convocatoria", "semestre_inicio", "duracion_semestres", "estado"]
     list_filter = ["convocatoria", "estado", "programa", "institucion__pais"]
     search_fields = ["estudiante__nombre_completo", "institucion__nombre"]
     readonly_fields = ["estado", "creada", "actualizada", "solicitud", "acuerdo_academico"]
-    inlines = [VersionLAInline, EventoInline]
+    inlines = [VersionLAInline, PlazoInline, ComunicacionInline, EventoInline]
 
     @admin.display(description="Acuerdo académico")
     def acuerdo_academico(self, obj):
@@ -177,7 +201,7 @@ class VersionLAAdmin(admin.ModelAdmin):
     autocomplete_fields = ["movilidad"]
     readonly_fields = ["avisos", "creada"]
     inlines = [FilaInline]
-    actions = ["firmar"]
+    actions = ["firmar", "enviar_administracion"]
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None or obj.editable:
@@ -185,6 +209,8 @@ class VersionLAAdmin(admin.ModelAdmin):
         bloqueados = [f.name for f in m.VersionLA._meta.concrete_fields if f.name != "id"]
         if obj.estado == m.EstadoVersionLA.FIRMADA:
             bloqueados = [f for f in bloqueados if f not in ("estado", "motivo_invalidacion")]
+        if not obj.pdf:
+            bloqueados.remove("pdf")
         return bloqueados + self.readonly_fields
 
     @admin.display(description="Avisos (RN-01…RN-07)")
@@ -218,8 +244,20 @@ class VersionLAAdmin(admin.ModelAdmin):
         obj = form.instance
         if getattr(obj, "_firmar", False):
             obj.firmar(usuario=request.user)
+        elif change and "pdf" in form.changed_data and obj.pdf and self._envio_pendiente(obj):
+            # Se adjunta el PDF que faltaba en un During ya firmado: se envía ahora.
+            c = enviar_la_a_administracion(obj, usuario=request.user)
+            if c and c.enviada:
+                messages.info(request, f"LA enviado a Administración ({c.para}).")
         for aviso in validar(obj.movilidad, version=obj if obj.editable else None):
             messages.warning(request, str(aviso))
+
+    @staticmethod
+    def _envio_pendiente(obj):
+        return (
+            settings.ENVIO_AUTOMATICO_LA and obj.estado == m.EstadoVersionLA.FIRMADA
+            and obj.plazos.filter(tipo=m.TipoPlazo.ENVIAR_LA_ADMINISTRACION, estado=m.EstadoPlazo.PENDIENTE).exists()
+        )
 
     @admin.action(description="Marcar como firmadas (las versiones pasan a ser inmutables)")
     def firmar(self, request, queryset):
@@ -228,6 +266,98 @@ class VersionLAAdmin(admin.ModelAdmin):
             v.firmar(usuario=request.user)
             firmadas += 1
         self.message_user(request, f"{firmadas} versión(es) firmada(s).")
+
+    @admin.action(description="Enviar a Administración (con copia al coordinador y al alumno)")
+    def enviar_administracion(self, request, queryset):
+        for v in queryset:
+            c = enviar_la_a_administracion(v, usuario=request.user)
+            if c is None or not c.enviada:
+                motivo = v.plazos.filter(tipo=m.TipoPlazo.ENVIAR_LA_ADMINISTRACION).last()
+                self.message_user(request, f"{v}: no enviado. {motivo.nota if motivo else ''}", messages.ERROR)
+            else:
+                self.message_user(request, f"{v}: enviado a {c.para} (cc {c.cc or '—'}). {c.error}")
+
+
+COLORES_ALERTA = {"VENCIDA": "#ba2121", "URGENTE": "#ba2121", "PROXIMA": "#b26b00", "CADUCADA": "#777"}
+
+
+def alerta_html(plazo, hoy):
+    nivel = nivel_alerta(plazo, hoy)
+    if not nivel:
+        return ""
+    return format_html('<b style="color:{}">{}</b>', COLORES_ALERTA[nivel], nivel.capitalize())
+
+
+@admin.register(m.Plazo)
+class PlazoAdmin(admin.ModelAdmin):
+    list_display = ["fecha_limite", "alerta", "movilidad", "tipo", "descripcion", "responsable", "estado", "origen"]
+    list_filter = ["estado", "tipo", "origen", "responsable", "movilidad__convocatoria"]
+    search_fields = ["descripcion", "movilidad__estudiante__nombre_completo", "movilidad__institucion__nombre"]
+    autocomplete_fields = ["movilidad"]
+    readonly_fields = ["origen", "regla", "version_la", "cumplido_en", "creado"]
+    actions = ["marcar_cumplidos", "descartar"]
+
+    @admin.display(description="Alerta")
+    def alerta(self, obj):
+        return alerta_html(obj, timezone.localdate())
+
+    @admin.action(description="Marcar como cumplidos")
+    def marcar_cumplidos(self, request, queryset):
+        for p in queryset.filter(estado=m.EstadoPlazo.PENDIENTE):
+            p.cerrar(m.EstadoPlazo.CUMPLIDO, f"Cerrado por {request.user}")
+
+    @admin.action(description="Descartar")
+    def descartar(self, request, queryset):
+        for p in queryset.filter(estado=m.EstadoPlazo.PENDIENTE):
+            p.cerrar(m.EstadoPlazo.DESCARTADO, f"Descartado por {request.user}")
+
+    def get_urls(self):
+        return [
+            path("pendientes/", self.admin_site.admin_view(self.vista_pendientes), name="movilidad_plazo_pendientes"),
+        ] + super().get_urls()
+
+    def vista_pendientes(self, request):
+        """RF-13: bandeja «Mis pendientes», ordenada por fecha límite."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        if request.method == "POST":
+            if not self.has_change_permission(request):
+                raise PermissionDenied
+            plazo = get_object_or_404(m.Plazo, pk=request.POST.get("plazo"), estado=m.EstadoPlazo.PENDIENTE)
+            accion = request.POST.get("accion")
+            if accion in ("cumplido", "descartar"):
+                estado = m.EstadoPlazo.CUMPLIDO if accion == "cumplido" else m.EstadoPlazo.DESCARTADO
+                plazo.cerrar(estado, f"{estado.label} por {request.user}")
+                self.message_user(request, f"«{plazo}»: {estado.label.lower()}.")
+            return redirect(request.path)
+        hoy = timezone.localdate()
+        filas = [{"plazo": p, "alerta": alerta_html(p, hoy)} for p in pendientes(hoy, request.user)]
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": "Mis pendientes",
+            "filas": filas,
+            "hoy": hoy,
+        }
+        return TemplateResponse(request, "admin/movilidad/pendientes.html", context)
+
+
+@admin.register(m.Comunicacion)
+class ComunicacionAdmin(admin.ModelAdmin):
+    """Registro de comunicaciones: solo lectura (es la traza de lo enviado)."""
+
+    list_display = ["fecha", "movilidad", "canal", "asunto", "para", "enviada"]
+    list_filter = ["canal", "enviada"]
+    search_fields = ["asunto", "movilidad__estudiante__nombre_completo"]
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in m.Comunicacion._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(m.Convocatoria)
