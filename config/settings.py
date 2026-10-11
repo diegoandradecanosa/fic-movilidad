@@ -90,10 +90,40 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-# Inicio de sesión con usuario de Django hasta implementar la cuenta UDC (Microsoft Entra ID).
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "panel"
 LOGOUT_REDIRECT_URL = "login"
+
+# Inicio de sesión con la cuenta UDC (Microsoft Entra ID, OpenID Connect). Se activa al definir las
+# tres variables (registro de la aplicación en Entra ID, de un solo inquilino). La URI de
+# redirección que hay que registrar es https://<servidor>/oidc/callback/. Usuario y contraseña de
+# Django siguen disponibles (superusuario, desarrollo).
+ENTRA_TENANT_ID = os.environ.get("ENTRA_TENANT_ID", "")
+ENTRA_CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID", "")
+ENTRA_CLIENT_SECRET = os.environ.get("ENTRA_CLIENT_SECRET", "")
+ENTRA_ACTIVO = bool(ENTRA_TENANT_ID and ENTRA_CLIENT_ID and ENTRA_CLIENT_SECRET)
+# Solo cuentas de estos dominios. Por defecto no se crean usuarios: entra quien tenga ya un usuario
+# con ese correo (lo da de alta el coordinador y le asigna el grupo). ENTRA_CREAR_USUARIOS=1 los
+# crea sin permisos.
+ENTRA_DOMINIOS = [d.strip().lower() for d in os.environ.get("ENTRA_DOMINIOS", "udc.es,udc.gal").split(",") if d.strip()]
+ENTRA_CREAR_USUARIOS = os.environ.get("ENTRA_CREAR_USUARIOS", "0") == "1"
+
+_ENTRA = f"https://login.microsoftonline.com/{ENTRA_TENANT_ID}"
+OIDC_RP_CLIENT_ID = ENTRA_CLIENT_ID
+OIDC_RP_CLIENT_SECRET = ENTRA_CLIENT_SECRET
+OIDC_OP_AUTHORIZATION_ENDPOINT = f"{_ENTRA}/oauth2/v2.0/authorize"
+OIDC_OP_TOKEN_ENDPOINT = f"{_ENTRA}/oauth2/v2.0/token"
+OIDC_OP_JWKS_ENDPOINT = f"{_ENTRA}/discovery/v2.0/keys"
+OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"  # no se usa: basta el id_token verificado
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_RP_SCOPES = "openid email profile"
+OIDC_USE_PKCE = True
+OIDC_CREATE_USER = ENTRA_CREAR_USUARIOS
+LOGIN_REDIRECT_URL_FAILURE = "/cuentas/login/?error=entra"
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+if ENTRA_ACTIVO:
+    INSTALLED_APPS.append("mozilla_django_oidc")
+    AUTHENTICATION_BACKENDS.insert(0, "movilidad.entra.BackendEntraID")
 
 # PDF de LA (y más adelante ToR y actas): datos de alumnos, fuera del repo (privado/ está en
 # .gitignore) y servidos solo a usuarios staff (ver config/urls.py).

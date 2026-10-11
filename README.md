@@ -38,8 +38,24 @@ del DPD). Lo extraído queda en borrador, con las dudas en las notas de la versi
 
 Se crean al migrar dos grupos: **Coordinación** (todo) y **Administración** (lectura de todos los
 expedientes, LA, ToR y actas, y anotaciones/peticiones; no edita LA ni actas). Asigna cada usuario a
-su grupo en el admin (Usuarios). Hasta implementar la cuenta UDC (Entra ID) se entra con usuario y
-contraseña de Django en `/cuentas/login/`. El admin (`/admin/`) solo lo usa Coordinación.
+su grupo en el admin (Usuarios). Se entra en `/cuentas/login/` con usuario y contraseña de Django o,
+si está configurada, con la cuenta UDC. El admin (`/admin/`) solo lo usa Coordinación.
+
+## Cuenta UDC (Microsoft Entra ID)
+
+Desactivada mientras no estén las tres variables `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID` y
+`ENTRA_CLIENT_SECRET`. Hay que pedir al Servizo de Informática el registro de una aplicación en
+Entra ID con:
+
+- cuentas **solo de este directorio** (inquilino de la UDC);
+- plataforma **Web**, URI de redirección `https://<servidor>/oidc/callback/` (y
+  `http://localhost:8000/oidc/callback/` para probar en local);
+- un **secreto de cliente**; permisos delegados `openid`, `email` y `profile` (sin Microsoft Graph).
+
+Entra quien tenga en la aplicación un usuario activo con su correo `@udc.es`/`@udc.gal` (se da de
+alta en el admin, con el correo, y se le asigna el grupo). Con `ENTRA_CREAR_USUARIOS=1` se crean
+solos, sin permisos, hasta que se les asigne un grupo. `ENTRA_DOMINIOS` cambia los dominios
+admitidos. Usuario y contraseña siguen funcionando (superusuario, desarrollo).
 
 ## Estado
 
@@ -55,3 +71,4 @@ contraseña de Django en `/cuentas/login/`. El admin (`/admin/`) solo lo usa Coo
 - [x] RF-10: importar el PDF del LA (OLA de EWP, modelo de la ORI, SICUE) con IA como borrador.
 - [x] RF-11: comparar la «Plantilla LA.xlsx» con el LA vigente (enlace «Comparar con la plantilla»
       en la movilidad; el Excel no se guarda).
+- [x] Inicio de sesión con la cuenta UDC (Entra ID), a falta del registro de la aplicación.

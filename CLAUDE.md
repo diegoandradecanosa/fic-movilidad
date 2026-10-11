@@ -95,7 +95,8 @@ Estados vistos: Adxudicatario/a, Rexeitado/a, Suplente N, "Suplente nº N", "lis
 ## Decisiones tomadas
 
 - Despliegue en nube externa; datos en la UE; contrato de encargado del tratamiento; DPD consultado
-  antes de producción. Inicio de sesión con cuenta UDC (Microsoft Entra ID) — pendiente de implementar.
+  antes de producción. Inicio de sesión con cuenta UDC (Microsoft Entra ID, `movilidad/entra.py`) — implementado,
+  pendiente del registro de la aplicación por el Servizo de Informática (ver README).
 - Roles: coordinador (todo), tutor académico (futuro, alumnos asignados), Administración (lectura de
   todo + anotaciones/peticiones al alumno o al coordinador, sin editar LA ni actas).
 - SICUE comparte el flujo de Erasmus+; solo cambia el formato del acuerdo.
