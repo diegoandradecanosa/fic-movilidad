@@ -564,6 +564,7 @@ class TipoPlazo(models.TextChoices):
     REVISAR_LA = "REVISAR_LA", "Revisar y firmar la versión del LA"
     ENVIAR_LA_ADMINISTRACION = "ENVIAR_LA_ADMINISTRACION", "Enviar el LA a Administración"
     ENVIAR_ACTA = "ENVIAR_ACTA", "Enviar el acta firmada (5 semanas desde el ToR)"
+    PETICION = "PETICION", "Petición de Administración"
     OTRO = "OTRO", "Otro"
 
 
@@ -601,6 +602,7 @@ class Plazo(models.Model):
     regla = models.CharField(max_length=10, blank=True, help_text="p. ej. RN-05")
     version_la = models.ForeignKey(VersionLA, null=True, blank=True, on_delete=models.CASCADE, related_name="plazos")
     tor = models.ForeignKey("ToR", null=True, blank=True, on_delete=models.CASCADE, related_name="plazos")
+    anotacion = models.ForeignKey("Anotacion", null=True, blank=True, on_delete=models.CASCADE, related_name="plazos")
     cumplido_en = models.DateTimeField(null=True, blank=True)
     nota = models.TextField(blank=True)
     creado = models.DateTimeField(auto_now_add=True)
@@ -640,6 +642,9 @@ class Comunicacion(models.Model):
     movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="comunicaciones")
     version_la = models.ForeignKey(VersionLA, null=True, blank=True, on_delete=models.SET_NULL)
     acta = models.ForeignKey("Acta", null=True, blank=True, on_delete=models.SET_NULL, related_name="comunicaciones")
+    anotacion = models.ForeignKey(
+        "Anotacion", null=True, blank=True, on_delete=models.SET_NULL, related_name="comunicaciones"
+    )
     canal = models.CharField(max_length=10, choices=CanalComunicacion.choices, default=CanalComunicacion.CORREO)
     saliente = models.BooleanField(default=True)
     fecha = models.DateTimeField(auto_now_add=True)
@@ -916,3 +921,49 @@ def _fila_acta_editable(sender, instance, **kwargs):
 for _modelo in (FilaActaC, FilaActaD):
     models.signals.pre_save.connect(_fila_acta_editable, sender=_modelo)
     models.signals.pre_delete.connect(_fila_acta_editable, sender=_modelo)
+
+
+# --- Bloque 5: anotaciones y peticiones de Administración (RF-30) ---------------------------------
+
+
+class DestinatarioAnotacion(models.TextChoices):
+    NINGUNO = "NINGUNO", "Nota interna (sin petición)"
+    COORDINADOR = "COORDINADOR", "Petición al coordinador"
+    ALUMNO = "ALUMNO", "Petición al alumno/a"
+
+
+class EstadoAnotacion(models.TextChoices):
+    ABIERTA = "ABIERTA", "Abierta"
+    RESPONDIDA = "RESPONDIDA", "Respondida"
+    CERRADA = "CERRADA", "Cerrada"
+
+
+class Anotacion(models.Model):
+    """Anotación en un expediente (RF-30). Administración la usa para pedir algo al coordinador
+    («falta el LA modificado para cambiar la matrícula») o al alumno; el destinatario recibe aviso."""
+
+    movilidad = models.ForeignKey(Movilidad, on_delete=models.CASCADE, related_name="anotaciones")
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    creada = models.DateTimeField(auto_now_add=True)
+    texto = models.TextField()
+    destinatario = models.CharField(max_length=12, choices=DestinatarioAnotacion.choices,
+                                    default=DestinatarioAnotacion.NINGUNO)
+    fecha_limite = models.DateField(null=True, blank=True)
+    estado = models.CharField(max_length=10, choices=EstadoAnotacion.choices, default=EstadoAnotacion.ABIERTA)
+    respuesta = models.TextField(blank=True)
+    respondida_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                       on_delete=models.SET_NULL, related_name="+")
+    respondida_en = models.DateTimeField(null=True, blank=True)
+    cerrada_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "anotación"
+        verbose_name_plural = "anotaciones"
+        ordering = ["-creada"]
+
+    def __str__(self):
+        return f"{self.get_destinatario_display()}: {self.texto[:60]}"
+
+    @property
+    def es_peticion(self):
+        return self.destinatario != DestinatarioAnotacion.NINGUNO

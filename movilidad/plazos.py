@@ -24,8 +24,9 @@ from movilidad.models import (
 )
 from movilidad.validaciones_la import sumar_meses
 
-# Tipos que mantiene recalcular_plazos. ENVIAR_LA_ADMINISTRACION lo crea envios.py si falla el envío.
-TIPOS_RECALCULADOS = set(TipoPlazo) - {TipoPlazo.ENVIAR_LA_ADMINISTRACION, TipoPlazo.OTRO}
+# Tipos que mantiene recalcular_plazos. ENVIAR_LA_ADMINISTRACION lo crea envios.py si falla el envío;
+# PETICION, anotaciones.py.
+TIPOS_RECALCULADOS = set(TipoPlazo) - {TipoPlazo.ENVIAR_LA_ADMINISTRACION, TipoPlazo.PETICION, TipoPlazo.OTRO}
 
 
 @dataclass

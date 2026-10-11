@@ -90,6 +90,10 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+# Inicio de sesión con usuario de Django hasta implementar la cuenta UDC (Microsoft Entra ID).
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "panel"
+LOGOUT_REDIRECT_URL = "login"
 
 # PDF de LA (y más adelante ToR y actas): datos de alumnos, fuera del repo (privado/ está en
 # .gitignore) y servidos solo a usuarios staff (ver config/urls.py).
