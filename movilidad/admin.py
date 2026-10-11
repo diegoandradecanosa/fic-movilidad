@@ -20,6 +20,7 @@ from movilidad.acta_docx import RecursosNoDisponibles, generar_documentos
 from movilidad.envios import EnvioImposible, enviar_atm, enviar_la_a_administracion
 from movilidad import extraccion_ia
 from movilidad.la_vigente import la_vigente
+from movilidad.plantilla_la import PlantillaIlegible, comparar, leer_plantilla
 from movilidad.plazos import nivel_alerta, pendientes
 from movilidad.validaciones_la import validar
 
@@ -124,6 +125,10 @@ class CambioEstadoForm(forms.Form):
         return datos
 
 
+class PlantillaForm(forms.Form):
+    excel = forms.FileField(label="Plantilla LA (.xlsx)", help_text="No se guarda: solo se lee para comparar.")
+
+
 @admin.register(m.Movilidad)
 class MovilidadAdmin(admin.ModelAdmin):
     list_display = ["estudiante", "institucion", "programa", "convocatoria", "semestre_inicio", "duracion_semestres", "estado"]
@@ -169,9 +174,10 @@ class MovilidadAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         return format_html(
-            '<a href="{}">Ver LA vigente</a> · <a href="{}?movilidad={}">Añadir versión del LA</a> · '
-            '<a href="{}?movilidad={}">Registrar ToR</a>',
+            '<a href="{}">Ver LA vigente</a> · <a href="{}">Comparar con la plantilla (Excel)</a> · '
+            '<a href="{}?movilidad={}">Añadir versión del LA</a> · <a href="{}?movilidad={}">Registrar ToR</a>',
             reverse("admin:movilidad_movilidad_la_vigente", args=[obj.pk]),
+            reverse("admin:movilidad_movilidad_comparar_plantilla", args=[obj.pk]),
             reverse("admin:movilidad_versionla_add"), obj.pk,
             reverse("admin:movilidad_tor_add"), obj.pk,
         )
@@ -180,7 +186,32 @@ class MovilidadAdmin(admin.ModelAdmin):
         return [
             path("<int:pk>/la-vigente/", self.admin_site.admin_view(self.vista_la_vigente),
                  name="movilidad_movilidad_la_vigente"),
+            path("<int:pk>/comparar-plantilla/", self.admin_site.admin_view(self.vista_comparar_plantilla),
+                 name="movilidad_movilidad_comparar_plantilla"),
         ] + super().get_urls()
+
+    def vista_comparar_plantilla(self, request, pk):
+        """RF-11: sube la «Plantilla LA.xlsx» y señala lo que no coincide con el LA vigente."""
+        movilidad = get_object_or_404(m.Movilidad, pk=pk)
+        if not self.has_view_permission(request, movilidad):
+            raise PermissionDenied
+        form = PlantillaForm(request.POST or None, request.FILES or None)
+        comparacion = error = None
+        if request.method == "POST" and form.is_valid():
+            try:
+                comparacion = comparar(movilidad, leer_plantilla(form.cleaned_data["excel"]))
+            except PlantillaIlegible as e:
+                error = str(e)
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "original": movilidad,
+            "title": f"Comparar con la plantilla · {movilidad}",
+            "form": form,
+            "comparacion": comparacion,
+            "error": error,
+        }
+        return TemplateResponse(request, "admin/movilidad/comparar_plantilla.html", context)
 
     def vista_la_vigente(self, request, pk):
         """RF-09: el LA consolidado, solo lectura. No hay formulario: se deriva de las versiones."""

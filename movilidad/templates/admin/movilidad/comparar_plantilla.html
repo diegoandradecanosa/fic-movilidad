@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:movilidad_movilidad_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; <a href="{% url 'admin:movilidad_movilidad_change' original.pk %}">{{ original }}</a>
+  &rsaquo; Comparar con la plantilla
+</div>
+{% endblock %}
+
+{% block content %}
+<p>Sube la «Plantilla LA.xlsx» (hojas Before / During / After) para ver qué no coincide con el
+<a href="{% url 'admin:movilidad_movilidad_la_vigente' original.pk %}">LA vigente</a>. Solo se compara: no cambia nada.</p>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Comparar">
+</form>
+
+{% if error %}<ul class="messagelist"><li class="error">{{ error }}</li></ul>{% endif %}
+
+{% if comparacion %}
+  {% if comparacion.hoja %}
+  <h2>Hoja comparada: «{{ comparacion.hoja.nombre }}»</h2>
+  <p>Es la que mejor casa con el LA vigente. Materias que casan, por hoja:</p>
+  <ul>{% for nombre, casan, total in comparacion.puntuaciones %}<li>{{ nombre }}: {{ casan }} de {{ total }}</li>{% endfor %}</ul>
+  <p>Correspondencias iguales en el Excel y en el LA: {{ comparacion.coincidencias }}.</p>
+  {% endif %}
+  <h2>Diferencias</h2>
+  {% if comparacion.diferencias %}
+  <ul class="messagelist">{% for d in comparacion.diferencias %}<li class="warning">{{ d }}</li>{% endfor %}</ul>
+  {% else %}
+  <ul class="messagelist"><li class="success">El Excel coincide con el LA vigente.</li></ul>
+  {% endif %}
+{% endif %}
+{% endblock %}

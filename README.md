@@ -53,3 +53,5 @@ contraseña de Django en `/cuentas/login/`. El admin (`/admin/`) solo lo usa Coo
 - [x] Bloque 5: panel de expedientes (`/`), ficha del expediente y acceso de Administración con
       anotaciones y peticiones al alumno o al coordinador.
 - [x] RF-10: importar el PDF del LA (OLA de EWP, modelo de la ORI, SICUE) con IA como borrador.
+- [x] RF-11: comparar la «Plantilla LA.xlsx» con el LA vigente (enlace «Comparar con la plantilla»
+      en la movilidad; el Excel no se guarda).
