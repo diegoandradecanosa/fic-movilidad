@@ -16,6 +16,7 @@ https://claude.ai/code/artifact/ae2b61ec-0700-4c90-9985-7a0eabd10cb0
 - Arranque local: `python manage.py migrate && python manage.py runserver`.
 - Importar adjudicaciones: `python manage.py importar_adjudicaciones <excel> --listado provisional|definitiva`.
 - Importar destinos: `python manage.py importar_destinos data/destinos_FIC_2026-27.csv`.
+- Importar asignaturas UDC: `python manage.py importar_asignaturas data/catalogo_asignaturas_FIC_2026-27.csv`.
 
 ## Estructura
 

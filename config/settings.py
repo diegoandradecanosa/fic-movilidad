@@ -90,4 +90,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+
+# PDF de LA (y más adelante ToR y actas): datos de alumnos, fuera del repo (privado/ está en
+# .gitignore) y servidos solo a usuarios staff (ver config/urls.py).
+MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "privado" / "media"))
+MEDIA_URL = "/privado/media/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
