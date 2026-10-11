@@ -1,0 +1,15 @@
+{% extends "movilidad/base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block contenido %}
+<div class="tarjeta" style="max-width:380px;margin:3rem auto">
+  <h1>Entrar</h1>
+  <p class="suave">Más adelante se entrará con la cuenta UDC.</p>
+  <form method="post">{% csrf_token %}
+    {% if form.errors %}<p class="bloqueo">Usuario o contraseña incorrectos.</p>{% endif %}
+    <p><label>Usuario<br>{{ form.username }}</label></p>
+    <p><label>Contraseña<br>{{ form.password }}</label></p>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="boton" type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

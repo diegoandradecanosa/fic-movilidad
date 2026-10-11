@@ -66,6 +66,18 @@ class ComunicacionInline(admin.TabularInline):
         return False
 
 
+class AnotacionInline(admin.TabularInline):
+    model = m.Anotacion
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ["creada", "autor", "destinatario", "texto", "fecha_limite", "estado", "respuesta"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 class ToRInline(admin.TabularInline):
     model = m.ToR
     extra = 0
@@ -96,7 +108,7 @@ class MovilidadAdmin(admin.ModelAdmin):
     list_filter = ["convocatoria", "estado", "programa", "institucion__pais"]
     search_fields = ["estudiante__nombre_completo", "institucion__nombre"]
     readonly_fields = ["estado", "creada", "actualizada", "solicitud", "acuerdo_academico"]
-    inlines = [VersionLAInline, ToRInline, ActaInline, PlazoInline, ComunicacionInline, EventoInline]
+    inlines = [AnotacionInline, VersionLAInline, ToRInline, ActaInline, PlazoInline, ComunicacionInline, EventoInline]
     actions = ["generar_acta"]
 
     @admin.action(description="Generar (o regenerar) el borrador del acta con los ToR aceptados")
@@ -397,6 +409,21 @@ class ComunicacionAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(m.Anotacion)
+class AnotacionAdmin(admin.ModelAdmin):
+    """Las anotaciones se crean y responden desde la ficha del expediente (envían avisos)."""
+
+    list_display = ["creada", "movilidad", "autor", "destinatario", "estado", "fecha_limite"]
+    list_filter = ["estado", "destinatario"]
+    search_fields = ["texto", "movilidad__estudiante__nombre_completo"]
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in m.Anotacion._meta.fields]
+
+    def has_add_permission(self, request):
         return False
 
 

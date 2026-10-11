@@ -1,0 +1,91 @@
+{% extends "movilidad/base.html" %}
+{% block titulo %}{{ m.estudiante }}{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'panel' %}">← Panel</a>{% if es_coordinacion %} · <a href="{% url 'admin:movilidad_movilidad_change' m.pk %}">Editar en el admin</a>{% endif %}</p>
+<h1>{{ m.estudiante }} · {{ m.institucion.nombre }}</h1>
+<div class="tarjeta datos">
+  <div><span>Estado</span><b>{{ m.get_estado_display }}</b></div>
+  <div><span>Programa</span>{{ m.get_programa_display }}</div>
+  <div><span>Convocatoria</span>{{ m.convocatoria }}</div>
+  <div><span>Titulación</span>{{ m.estudiante.titulacion|default:"—" }}</div>
+  <div><span>DNI</span>{{ m.estudiante.dni_mascara }}</div>
+  <div><span>Correo</span>{{ m.estudiante.email|default:"—" }}</div>
+  <div><span>Semestre de inicio · duración</span>{{ m.semestre_inicio|default:"—" }} · {{ m.duracion_semestres|default:"—" }} sem.</div>
+  <div><span>Llegada (prevista / real) · fin</span>{{ m.fecha_llegada_prevista|date:"d/m/Y"|default:"—" }} / {{ m.fecha_llegada|date:"d/m/Y"|default:"—" }} · {{ m.fecha_fin|date:"d/m/Y"|default:"—" }}</div>
+</div>
+
+<h2>Anotaciones y peticiones</h2>
+{% if puede_anotar %}
+<form class="tarjeta" method="post" action="{% url 'anotar' m.pk %}">{% csrf_token %}
+  {{ form.texto }}
+  <div class="filtros" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.5rem">
+    <label>Para {{ form.destinatario }}</label> <label>Plazo {{ form.fecha_limite }}</label>
+    <button class="boton" type="submit">Guardar</button>
+  </div>
+  <p class="suave">Una petición al coordinador aparece en sus pendientes y le llega por correo; al alumno/a le llega por correo.</p>
+</form>
+{% endif %}
+{% for a in anotaciones %}
+<div class="tarjeta">
+  <div><span class="chip">{{ a.get_destinatario_display }}</span> <span class="chip">{{ a.get_estado_display }}</span>
+    <span class="suave">{{ a.autor|default:"—" }} · {{ a.creada|date:"d/m/Y H:i" }}{% if a.fecha_limite %} · plazo {{ a.fecha_limite|date:"d/m/Y" }}{% endif %}</span></div>
+  <p>{{ a.texto|linebreaksbr }}</p>
+  {% if a.respuesta %}<p><b>Respuesta</b> ({{ a.respondida_por }}, {{ a.respondida_en|date:"d/m/Y" }}): {{ a.respuesta|linebreaksbr }}</p>{% endif %}
+  {% if a.puede_responder %}
+  <form method="post" action="{% url 'accion_anotacion' a.pk 'responder' %}">{% csrf_token %}
+    <textarea name="respuesta" rows="2" placeholder="{% if a.destinatario == 'ALUMNO' %}Qué contestó el alumno/a{% else %}Respuesta{% endif %}"></textarea>
+    <button class="secundario" type="submit">Marcar como respondida</button>
+  </form>
+  {% endif %}
+  {% if a.puede_cerrar %}
+  <form method="post" action="{% url 'accion_anotacion' a.pk 'cerrar' %}" style="margin-top:.4rem">{% csrf_token %}
+    <button class="secundario" type="submit">Cerrar</button>
+  </form>
+  {% endif %}
+</div>
+{% empty %}<p class="suave">Sin anotaciones.</p>{% endfor %}
+
+<h2>Acuerdo académico vigente</h2>
+<p class="suave">Resultado de aplicar en orden las versiones firmadas. No se edita.</p>
+{% for s in semestres %}
+<div class="tabla tarjeta"><b>{{ s.numero }}.º semestre</b>
+<table>
+  <thead><tr><th>Materias de destino</th><th>ECTS</th><th>Materias UDC</th><th>ECTS</th></tr></thead>
+  <tbody>{% for g in s.grupos %}<tr>
+    <td>{% for a in g.materias_destino %}{{ a.nombre }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+    <td>{{ g.ects_destino|floatformat:"-1" }}</td>
+    <td>{% if g.sin_reconocimiento %}<em>Sin reconocimiento</em>{% else %}{% for a in g.materias_udc %}{{ a.codigo }} {{ a.nombre }}{% if not forloop.last %}<br>{% endif %}{% endfor %}{% endif %}</td>
+    <td>{{ g.ects_udc|floatformat:"-1" }}</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><th>Total reconocible</th><th>{{ s.ects_destino|floatformat:"-1" }}</th><th></th><th>{{ s.ects_udc|floatformat:"-1" }}</th></tr></tfoot>
+</table></div>
+{% empty %}<p>Todavía no hay ninguna versión firmada.</p>{% endfor %}
+{% if avisos %}<div class="tarjeta"><b>Avisos del LA</b><ul>{% for a in avisos %}<li>{{ a }}</li>{% endfor %}</ul></div>{% endif %}
+
+<h2>Versiones del LA</h2>
+<div class="tabla"><table><thead><tr><th>Versión</th><th>Formato</th><th>Estado</th><th>Firmas (estudiante · UDC · destino)</th><th>PDF</th></tr></thead><tbody>
+{% for v in versiones %}<tr><td>v{{ v.numero }} {{ v.get_tipo_display }}</td><td>{{ v.get_formato_display }}</td><td>{{ v.get_estado_display }}</td>
+  <td>{{ v.fecha_firma_estudiante|date:"d/m/Y"|default:"—" }} · {{ v.fecha_firma_udc|date:"d/m/Y"|default:"—" }} · {{ v.fecha_firma_destino|date:"d/m/Y"|default:"—" }}</td>
+  <td>{% if v.pdf %}<a href="{{ v.pdf.url }}">PDF</a>{% else %}—{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5">Sin versiones.</td></tr>{% endfor %}</tbody></table></div>
+
+<h2>ToR y actas</h2>
+<div class="tabla"><table><thead><tr><th>Documento</th><th>Estado</th><th>Fechas</th><th>Ficheros</th></tr></thead><tbody>
+{% for t in tors %}<tr><td>{{ t }}{% if t.parcial %} <span class="chip">parcial</span>{% endif %}</td><td>{{ t.get_estado_display }}</td><td>recibido {{ t.fecha_recepcion|date:"d/m/Y" }} ({{ t.get_remitente_display }})</td>
+  <td>{% if t.pdf %}<a href="{{ t.pdf.url }}">PDF</a>{% else %}—{% endif %}</td></tr>{% endfor %}
+{% for a in actas %}<tr><td>{{ a }}{% if a == acta_vigente %} <span class="chip ok">vigente</span>{% endif %}{% if a.corrige %} <span class="suave">corrige v{{ a.corrige.numero }}: {{ a.motivo_correccion }}</span>{% endif %}</td>
+  <td>{{ a.get_estado_display }}</td><td>{% if a.fecha_firma %}firmada {{ a.fecha_firma|date:"d/m/Y" }}{% endif %}{% if a.fecha_envio %} · enviada {{ a.fecha_envio|date:"d/m/Y" }}{% endif %}</td>
+  <td>{% if a.pdf_firmado %}<a href="{{ a.pdf_firmado.url }}">PDF firmado</a>{% elif a.docx %}<a href="{{ a.docx.url }}">Borrador (docx)</a>{% else %}—{% endif %}</td></tr>{% endfor %}
+{% if not tors and not actas %}<tr><td colspan="4">Sin ToR ni actas.</td></tr>{% endif %}
+</tbody></table></div>
+
+<h2>Plazos pendientes</h2>
+<div class="tabla"><table><thead><tr><th>Fecha</th><th>Plazo / tarea</th><th>Nota</th></tr></thead><tbody>
+{% for p in plazos %}<tr><td>{{ p.fecha_limite|date:"d/m/Y"|default:"—" }}</td><td>{{ p.descripcion|default:p.get_tipo_display }}{% if p.regla %} ({{ p.regla }}){% endif %}</td><td class="suave">{{ p.nota|linebreaksbr }}</td></tr>
+{% empty %}<tr><td colspan="3">Nada pendiente.</td></tr>{% endfor %}</tbody></table></div>
+
+<h2>Comunicaciones e historial</h2>
+<div class="tabla"><table><thead><tr><th>Fecha</th><th>Qué</th><th></th></tr></thead><tbody>
+{% for c in comunicaciones %}<tr><td>{{ c.fecha|date:"d/m/Y H:i" }}</td><td>✉ {{ c.asunto }} <span class="suave">→ {{ c.para|default:"—" }}</span></td><td>{% if c.enviada %}<span class="ok">enviado</span>{% else %}<span class="bloqueo">no enviado</span>{% endif %} <span class="suave">{{ c.error }}</span></td></tr>{% endfor %}
+{% for e in eventos %}<tr><td>{{ e.fecha|date:"d/m/Y H:i" }}</td><td>{{ e.get_estado_anterior_display|default:"—" }} → {{ e.get_estado_nuevo_display }}</td><td class="suave">{{ e.usuario|default:"" }} {{ e.nota }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

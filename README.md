@@ -32,6 +32,13 @@ Importar la tabla oficial de equivalencias: `python manage.py importar_equivalen
 El PDF del acta se genera solo si LibreOffice (`soffice`) está instalado. Extracción de ToR con IA:
 `pip install -e ".[ia]"` y `ANTHROPIC_API_KEY` (envía el PDF del ToR a Anthropic: pendiente del DPD).
 
+## Roles
+
+Se crean al migrar dos grupos: **Coordinación** (todo) y **Administración** (lectura de todos los
+expedientes, LA, ToR y actas, y anotaciones/peticiones; no edita LA ni actas). Asigna cada usuario a
+su grupo en el admin (Usuarios). Hasta implementar la cuenta UDC (Entra ID) se entra con usuario y
+contraseña de Django en `/cuentas/login/`. El admin (`/admin/`) solo lo usa Coordinación.
+
 ## Estado
 
 - [x] Bloque 1: importar adjudicaciones de la ORI (provisional → definitiva), expedientes de
@@ -41,3 +48,5 @@ El PDF del acta se genera solo si LibreOffice (`soffice`) está instalado. Extra
       modificado a Administración).
 - [x] Bloque 4: ToR (registro, extracción con IA opcional, emparejamiento con el LA), conversión de
       notas, acta «After the Mobility» (docx, versiones y correcciones) y envío «ATM de …».
+- [x] Bloque 5: panel de expedientes (`/`), ficha del expediente y acceso de Administración con
+      anotaciones y peticiones al alumno o al coordinador.

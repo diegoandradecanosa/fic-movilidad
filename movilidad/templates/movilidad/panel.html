@@ -1,0 +1,41 @@
+{% extends "movilidad/base.html" %}
+{% block titulo %}Panel{% endblock %}
+{% block contenido %}
+<h1>Expedientes de movilidad</h1>
+<form class="filtros tarjeta" method="get">
+  {% for campo in form %}{% if campo.name != "bloqueos" %}<label>{{ campo.label }}{{ campo }}</label>{% endif %}{% endfor %}
+  <label style="flex-direction:row;align-items:center;gap:.3rem">{{ form.bloqueos }} {{ form.bloqueos.label }}</label>
+  <button class="boton" type="submit">Filtrar</button>
+  <a href="{% url 'panel' %}?curso=">Quitar filtros</a>
+</form>
+<div class="resumen">
+  <span class="chip"><b>{{ filas|length }}</b> expedientes</span>
+  <span class="chip bloqueo"><b>{{ con_bloqueos }}</b> con bloqueos</span>
+  {% for estado, n in por_estado.items %}<span class="chip">{{ estado }}: {{ n }}</span>{% endfor %}
+</div>
+<div class="tabla">
+<table>
+  <thead><tr><th>Alumno/a</th><th>Titulación</th><th>Programa</th><th>Destino</th><th>Sem.</th><th>Estado</th>
+    <th>LA</th><th>Próximo plazo</th><th>Peticiones</th><th>Bloqueos</th></tr></thead>
+  <tbody>
+  {% for f in filas %}{% with m=f.movilidad %}
+    <tr>
+      <td><a href="{% url 'expediente' m.pk %}">{{ m.estudiante }}</a></td>
+      <td class="suave">{{ m.estudiante.titulacion|default:"—" }}</td>
+      <td>{{ m.get_programa_display }}</td>
+      <td>{{ m.institucion.nombre }} <span class="suave">({{ m.institucion.pais }})</span></td>
+      <td>{{ m.semestre_inicio|default:"—" }}{% if m.duracion_semestres == 2 %} · anual{% endif %}</td>
+      <td><span class="chip">{{ m.get_estado_display }}</span></td>
+      <td>{{ f.la }}</td>
+      <td>{% if f.proximo %}<span class="{{ f.alerta|default:'' }}">{{ f.proximo.fecha_limite|date:"d/m/Y" }}</span><br>
+          <span class="suave">{{ f.proximo.descripcion|default:f.proximo.get_tipo_display|truncatechars:60 }}</span>{% else %}—{% endif %}</td>
+      <td>{% if f.peticiones %}<b>{{ f.peticiones }}</b>{% else %}—{% endif %}</td>
+      <td>{% for b in f.bloqueos %}<div class="bloqueo">{{ b|truncatechars:70 }}</div>{% empty %}<span class="ok">—</span>{% endfor %}</td>
+    </tr>
+  {% endwith %}{% empty %}
+    <tr><td colspan="10">No hay expedientes con estos filtros.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
